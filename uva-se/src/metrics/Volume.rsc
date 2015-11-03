@@ -5,6 +5,8 @@ import lang::java::jdt::m3::Core;
 import demo::common::Crawl;
 import IO;
 import String;
+import Set;
+import Relation;
 
 public int LOC(str project) {
 	return (0 | it + LOC(file) | file <- getJavaFiles(project));
@@ -14,16 +16,6 @@ public int LOC(loc file) {
 	content = readFile(file);
 	content = removeComments(content);
 	return (0 | it + 1 | line <- split("\n", content), trim(line) != "");
-}
-
-public int compilationUnitLOC(str project) {
-	count = 0;
-	
-	model = createM3FromEclipseProject(|project://<project>|);
-	
-	units = {l | l <- domain(model@containment), l.scheme == "java+compilationUnit"};
-	
-	
 }
 
 private list[loc] getJavaFiles(str project) {
