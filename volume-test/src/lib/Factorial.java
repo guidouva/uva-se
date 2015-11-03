@@ -20,3 +20,5 @@ public class Factorial {
 	}
 
 }
+
+// LOC for Volume metric for this file should be: 10

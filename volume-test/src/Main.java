@@ -15,3 +15,5 @@ public class Main {
 	}
 
 }
+
+// LOC: 6
