@@ -13,8 +13,8 @@ public class Main {
 	public static void main(String[] args) {
 		/* lalal multiline
 		 * 
-		 */ System.out.println(Integer.toString(Factorial.calculate(10))); /* lala */ /* lala */
-		 System.out.println("The end");
+		 */ System.out.println(Integer.toString(Factorial.calculate(10))); /* lala */ /* lala
+		 */ System.out.println("The end");
 	}
 
 }
