@@ -4,7 +4,6 @@ import IO;
 import Relation;
 import String;
 import Set;
-import Relation;
 
 import lang::java::m3::Core;
 import lang::java::jdt::m3::Core;
