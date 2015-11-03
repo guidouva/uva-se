@@ -6,24 +6,24 @@ import demo::common::Crawl;
 import IO;
 import String;
 
-public int volume(str project) {
-	count = 0;
-	
-	for (file <- getJavaFiles(project)) {
-		content = readFile(file);
-		content = removeComments(content);
-		count += (0 | it + 1 | line <- split("\n", content), trim(line) != "");
-	}
-	
-	return count;
+public int LOC(str project) {
+	return (0 | it + LOC(file) | file <- getJavaFiles(project));
 }
 
-public int compilationUnitVolume(str project) {
+public int LOC(loc file) {
+	content = readFile(file);
+	content = removeComments(content);
+	return (0 | it + 1 | line <- split("\n", content), trim(line) != "");
+}
+
+public int compilationUnitLOC(str project) {
 	count = 0;
 	
 	model = createM3FromEclipseProject(|project://<project>|);
 	
-	{ l | l <- domain(model@containment), l.scheme == "java+compilationUnit" };
+	units = {l | l <- domain(model@containment), l.scheme == "java+compilationUnit"};
+	
+	
 }
 
 private list[loc] getJavaFiles(str project) {
