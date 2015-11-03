@@ -15,7 +15,7 @@ public int LOC(M3 model) =
 private set[loc] compilationUnits(M3 model) =
 	{ l | l <- domain(model@containment), l.scheme == "java+compilationUnit" };
 
-private int LOC(loc file) {
+public int LOC(loc file) {
 	content = readFile(file);
 	content = removeComments(content);
 	return (0 | it + 1 | line <- split("\n", content), trim(line) != "");
