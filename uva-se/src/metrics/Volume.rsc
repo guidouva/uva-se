@@ -16,8 +16,7 @@ private set[loc] compilationUnits(M3 model) =
 	{ l | l <- domain(model@containment), l.scheme == "java+compilationUnit" };
 
 public int LOC(loc file) {
-	content = readFile(file);
-	content = removeComments(content);
+	content = removeComments(readFile(file));
 	return (0 | it + 1 | line <- split("\n", content), trim(line) != "");
 }
 
@@ -29,10 +28,14 @@ private str removeSingleLineComment(str content) =
 		case /[\/]{2}.*/ => ""
 	};
 
-private str removeMultiLineComment(str content) =
-	visit(content) {
+private str removeMultiLineComment(str content) {
+	content = visit(content) {
+		case /[\/][\*].*?[\*][\/]/ => ""
+	};
+	return visit(content) {
 		case /[\/][\*].*?[\*][\/]/s => "\n"
 	};
+}
 
 test bool testLOC() =
-	LOC(createM3FromEclipseProject(|project://volume-test|)) == 17;
+	LOC(createM3FromEclipseProject(|project://volume-test|)) == 18;
