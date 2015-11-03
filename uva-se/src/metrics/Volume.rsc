@@ -11,33 +11,36 @@ public int volume(str project) {
 	
 	for (file <- getJavaFiles(project)) {
 		content = readFile(file);
-		content = filterComments(content);
-	
-		for (line <- split("\n", content)) {
-			if (trim(line) != "") {
-				count += 1;
-			}
-		}
+		content = removeComments(content);
+		count += (0 | it + 1 | line <- split("\n", content), trim(line) != "");
 	}
 	
 	return count;
+}
+
+public int compilationUnitVolume(str project) {
+	count = 0;
+	
+	model = createM3FromEclipseProject(|project://<project>|);
+	
+	{ l | l <- domain(model@containment), l.scheme == "java+compilationUnit" };
 }
 
 private list[loc] getJavaFiles(str project) {
 	return crawl(|project://<project>/src|, ".java");
 }
 
-private str filterComments(str content) {
-	return filterMultiLineComment(filterSingleLineComment(content));
+private str removeComments(str content) {
+	return removeMultiLineComment(removeSingleLineComment(content));
 }
 
-private str filterSingleLineComment(str content) {
+private str removeSingleLineComment(str content) {
 	return visit(content) {
 		case /[\/]{2}.*/ => ""
 	};
 }
 
-private str filterMultiLineComment(str content) {
+private str removeMultiLineComment(str content) {
 	return visit(content) {
 		case /[\/][\*].*?[\*][\/]/s => "\n"
 	};
