@@ -4,19 +4,17 @@ import IO;
 import Relation;
 import String;
 import Set;
-import Relation;
 
 import lang::java::m3::Core;
 import lang::java::jdt::m3::Core;
 
+import metrics::ModelHelpers;
+
 public int LOC(M3 model) =
 	(0 | it + i | i <- { LOC(l) | l <- compilationUnits(model) });
 
-private set[loc] compilationUnits(M3 model) =
-	{ l | l <- domain(model@containment), l.scheme == "java+compilationUnit" };
-
 public int LOC(loc file) {
-	content = removeComments(readFile(file));
+	content = removeComments(readFile(file));	
 	return (0 | it + 1 | line <- split("\n", content), trim(line) != "");
 }
 
