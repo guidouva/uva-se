@@ -11,9 +11,12 @@ public class Main {
 	 */
 
 	public static void main(String[] args) {
-		System.out.println(Integer.toString(Factorial.calculate(10)));
+		/* lalal multiline
+		 * 
+		 */ System.out.println(Integer.toString(Factorial.calculate(10))); /* lala */ /* lala */
+		 System.out.println("The end");
 	}
 
 }
 
-// LOC: 6
+// LOC: 7
