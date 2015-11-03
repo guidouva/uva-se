@@ -12,7 +12,7 @@ public class Factorial {
 		int result = 1;
 		for(int i = 2; i <= n; ++i) { /* do not ignore this line
 			but ignore this line
-		do not ignore this line */ result *= i;
+		do not ignore this line */ /* still do not ignore this line */ result *= i; // don't ignore this line
 		}
 		
 		return result;
