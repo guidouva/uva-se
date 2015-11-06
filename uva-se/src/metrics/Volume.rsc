@@ -11,7 +11,7 @@ import lang::java::jdt::m3::Core;
 import metrics::ModelHelpers;
 
 public int LOC(M3 model) =
-	(0 | it + i | i <- { LOC(l) | l <- compilationUnits(model) });
+	(0 | it + LOC(l) | l <- compilationUnits(model));
 
 public int LOC(loc file) {
 	content = removeComments(readFile(file));	
