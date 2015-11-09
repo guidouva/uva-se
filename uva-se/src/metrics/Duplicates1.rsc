@@ -4,53 +4,69 @@ import lang::java::m3::Core;
 import lang::java::jdt::m3::Core;
 
 import IO;
-import util::Math;
 import String;
 import List;
 import Set;
 
 import metrics::ModelHelpers;
 
-int CLONE_SIZE = 6;
+int numCloneLines(M3 model) {
+	println("[1/3] loading lines of code into memory...");
+	allLines = ([]
+		| it + [ trim(line) | line <- readFileLines(location) ]
+		| location <- compilationUnits(model)
+	);
 
-int numClones(M3 model) {
-	compUnits = compilationUnits(model);
-	allLines = ([] | it + [ trim(line) | line <- readFileLines(l) ] | l <- compUnits);
-	return numClones(allLines);
+	println("[2/3] indexing lines of code...");
+	lineIndex = indexLines(allLines);
+	
+	println("[3/3] counting total lines of clones");
+	return numCloneLines(6, allLines, lineIndex);
 }
 
-public int numClones(list[int] lines) {
+map[str,list[int]] indexLines(list[str] lines) {
+	map[str,list[int]] index = ();
+
+	for(i <- [0..size(lines)]) {
+		line = lines[i];
+		if(line notin index) {
+			index[line] = [i];
+		} else {
+			index[line] = index[line] + i;
+		}
+	}	
+	
+	return index;
+}
+
+public int numCloneLines(int threshold, list[str] lines, map[str,list[int]] index) {
 	
 	totalSize = size(lines);
-
-	if(totalSize < CLONE_SIZE*2) {
-		return 0;
-	}
-	
 	cloneLines = {};
-
-	for(i <- [0 .. totalSize - (CLONE_SIZE*2)]) {
 	
-		if(i % 100 == 0) {
-			println("<i> / <totalSize>");
-		}
+	for(line <- index) {
 	
-		for(j <- [i + CLONE_SIZE .. totalSize - CLONE_SIZE]) {
+		lineNumbers = index[line];
+		numLines = size(lineNumbers);
 		
-			<realI, realJ, cloneSize> = clone(totalSize, lines, i, j);
+		println("<line> [<numLines>]");
 
-			if(cloneSize >= CLONE_SIZE) {
+		for(i <- [0..numLines], j <- [i+1..numLines]) {
+			<realI, realJ, cloneSize> =
+				clone(totalSize, lines, lineNumbers[i], lineNumbers[j]);
+			
+			if(cloneSize >= threshold) {
 				cloneLines = cloneLines + { realI + k, realJ + k | k <- [0..cloneSize] };
 			}
-
 		}
-
+	
 	}
 	
 	return size(cloneLines);
+	
 }
 
-tuple[int,int,int] clone(int szlines, list[int] lines, int aOffset, int bOffset) {
+tuple[int,int,int] clone(int szlines, list[str] lines, int aOffset, int bOffset) {
 
 	realOffset = 0;
 	while(lines[aOffset-realOffset-1] == lines[bOffset-realOffset-1]
@@ -72,5 +88,5 @@ tuple[int,int,int] clone(int szlines, list[int] lines, int aOffset, int bOffset)
 	
 }
 
-test bool testNumClones() =
-	numClones(createM3FromEclipseProject(|project://duplication-test|)) == 10;
+//test bool testNumClones() =
+	//numClones(createM3FromEclipseProject(|project://duplication-test|)) == 10;
