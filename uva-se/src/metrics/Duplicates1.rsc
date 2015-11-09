@@ -9,18 +9,25 @@ import List;
 import Set;
 
 import metrics::ModelHelpers;
+import metrics::CodeHelpers;
 
 int numCloneLines(M3 model) {
-	println("[1/3] loading lines of code into memory...");
-	allLines = ([]
-		| it + [ trim(line) | line <- readFileLines(location) ]
+	println("[1/4] loading lines of code into memory...");
+
+	allText = (""
+		| it + readFile(location)+"\n"
 		| location <- compilationUnits(model)
 	);
+	
+	println("[2/4] removing comments...");
+	
+	allLines = [ trim(line) | line <- split("\n", removeComments(allText))
+						    , !isEmpty(trim(line)) ];
 
-	println("[2/3] indexing lines of code...");
+	println("[3/4] indexing lines of code...");
 	lineIndex = indexLines(allLines);
 	
-	println("[3/3] counting total lines of clones");
+	println("[4/4] counting total lines of clones");
 	return numCloneLines(6, allLines, lineIndex);
 }
 
@@ -49,17 +56,20 @@ public int numCloneLines(int threshold, list[str] lines, map[str,list[int]] inde
 		lineNumbers = index[line];
 		numLines = size(lineNumbers);
 		
-		println("<line> [<numLines>]");
-
-		for(i <- [0..numLines], j <- [i+1..numLines]) {
+		for(i <- [0..numLines-1], j <- [i+1..numLines]) {
 			<realI, realJ, cloneSize> =
 				clone(totalSize, lines, lineNumbers[i], lineNumbers[j]);
 			
 			if(cloneSize >= threshold) {
+				sz = size(cloneLines);
 				cloneLines = cloneLines + { realI + k, realJ + k | k <- [0..cloneSize] };
+				if(size(cloneLines) - sz > 0) {
+					c = ("" | it + "[<realJ+k>] " + lines[realJ+k] + "\n" | k <- [0..cloneSize]);
+					print(c);
+				}
 			}
 		}
-	
+		
 	}
 	
 	return size(cloneLines);
@@ -69,8 +79,8 @@ public int numCloneLines(int threshold, list[str] lines, map[str,list[int]] inde
 tuple[int,int,int] clone(int szlines, list[str] lines, int aOffset, int bOffset) {
 
 	realOffset = 0;
-	while(lines[aOffset-realOffset-1] == lines[bOffset-realOffset-1]
-		&& aOffset-realOffset >= 1 && bOffset-realOffset >= 1
+	while(aOffset-realOffset >= 1 && bOffset-realOffset >= 1
+		&& lines[aOffset-realOffset-1] == lines[bOffset-realOffset-1]
 	) {
 		realOffset += 1;	
 	}
@@ -79,8 +89,8 @@ tuple[int,int,int] clone(int szlines, list[str] lines, int aOffset, int bOffset)
 	bOffset -= realOffset;
 	
 	cloneSize = 0;	
-	while(lines[aOffset+cloneSize] == lines[bOffset+cloneSize] &&
-		aOffset+cloneSize < szlines && bOffset+cloneSize < szlines) {
+	while(aOffset+cloneSize < szlines && bOffset+cloneSize < szlines &&
+		lines[aOffset+cloneSize] == lines[bOffset+cloneSize]) {
 		cloneSize += 1;
 	}
 	
