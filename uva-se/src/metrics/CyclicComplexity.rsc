@@ -64,7 +64,7 @@ private int expressionComplexity(Expression expression) {
 bool testCcMethod(loc method, int expectedCc) {
 	model = createM3FromEclipseProject(|project://cc-test|);
 	actualCc = cyclicComplexity(method, model);
-	println("\<<expectedCc>,<actualCc>\> <method>");
+	println("\<expected <expectedCc>, got <actualCc>\> <method>");
 	return actualCc == expectedCc;
 }
 
