@@ -65,8 +65,4 @@ public class Main {
 	}
 }
 
-// clone lines in this file: 		6 + 6 + 7 = 19
-// clone lines in NotMain  :        		     0
-// clone lines over the two files:  6 + 7 + 7 = 20
-//                                              --+
-//                                              39
+// cloned lines in this project: 46
