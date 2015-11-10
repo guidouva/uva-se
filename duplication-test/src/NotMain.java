@@ -1,6 +1,18 @@
+import static java.lang.Math.PI;
+import static java.lang.Math.PI;
+import static java.lang.Math.PI;
+import static java.lang.Math.PI;
+import static java.lang.Math.PI;
+import static java.lang.Math.PI;
 
 public class NotMain {
-
+	private int x = 3;
+	private int y = 3;
+	private int z = 3;
+	private int a = 3;
+	private int b = 3;
+	private int c = 3;
+	
 	public static void bar() {
 		// not clone of A
 		System.out.println(Integer.toString(11));
