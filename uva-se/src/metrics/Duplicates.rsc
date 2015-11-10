@@ -9,11 +9,17 @@ import List;
 import Set;
 
 import util::Math;
+import util::Benchmark;
 
 import metrics::ModelHelpers;
 import metrics::CodeHelpers;
 
+alias line_t = str;
+
 int numCloneLines(M3 model) {
+
+	\start = realTime()*1.0;
+
 	println("[1/4] loading lines of code into memory...");
 
 	allText = (""
@@ -30,11 +36,27 @@ int numCloneLines(M3 model) {
 	lineIndex = indexLines(allLines);
 	
 	println("[4/4] counting total lines of clones");
-	return numCloneLines(6, allLines, lineIndex);
+	
+	n = numCloneLines(6, allLines, lineIndex);
+	
+	end = realTime()*1.0;
+	seconds = (end - \start) / 1000;
+	
+	println("runtime: <seconds>s");
+	
+	return n;
 }
 
-map[str,list[int]] indexLines(list[str] lines) {
-	map[str,list[int]] index = ();
+int hashCode(str s) {
+	int hash = 7;
+	for(i <- [0..size(s)]) {
+		hash = hash*31 + charAt(s,i);
+	}
+	return hash;
+}
+
+map[line_t,list[int]] indexLines(list[line_t] lines) {
+	map[line_t,list[int]] index = ();
 
 	for(i <- [0..size(lines)]) {
 		line = lines[i];
@@ -48,7 +70,7 @@ map[str,list[int]] indexLines(list[str] lines) {
 	return index;
 }
 
-public int numCloneLines(int threshold, list[str] lines, map[str,list[int]] index) {
+public int numCloneLines(int threshold, list[line_t] lines, map[line_t,list[int]] index) {
 	
 	totalSize = size(lines);
 	cloneLines = {};
@@ -88,7 +110,7 @@ public int numCloneLines(int threshold, list[str] lines, map[str,list[int]] inde
 	
 }
 
-bool isClone(int threshold, list[str] lines, int aOffset, int bOffset) {
+bool isClone(int threshold, list[line_t] lines, int aOffset, int bOffset) {
 
 	cloneSize = 0;	
 
