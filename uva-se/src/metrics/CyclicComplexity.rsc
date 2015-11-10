@@ -25,6 +25,8 @@ public int cyclicComplexity(loc file, M3 model) {
 	    	count += expressionComplexity(expr);
 	    case \while(expr, _):
 	    	count += expressionComplexity(expr);
+	    case \do(_, expr):
+	    	count += expressionComplexity(expr);
 	    case \if(expr, _):
 	    	count += expressionComplexity(expr);
 		case \if(expr, _, _):
