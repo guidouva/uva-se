@@ -13,7 +13,6 @@ import metrics::CodeHelpers;
 
 public int cyclicComplexity(M3 model) {
 	complexity = (0 | it + cyclicComplexity(unit, model) | unit <- methods(model));
-	println(complexity);
 	return complexity;
 }
 
@@ -48,14 +47,16 @@ public int cyclicComplexity(loc file, M3 model) {
 }
 
 private int expressionComplexity(Expression expression) {
+	count = 1;
+	
 	visit (expression) {
 		case \infix(lExpr, "&&", rExpr):
-			return expressionComplexity(lExpr) + expressionComplexity(rExpr);
+			count += 1;
 		case \infix(lExpr, "||", rExpr):
-			return expressionComplexity(lExpr) + expressionComplexity(rExpr);
+			count += 1;
 	}
 	
-	return 1;
+	return count;
 }
 
 bool testCcMethod(loc method, int expectedCc) {
