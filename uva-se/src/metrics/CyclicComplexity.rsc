@@ -113,7 +113,7 @@ test bool testCcTrycatchfinally() = testCcMethod(|java+method:///Main/trycatchfi
 test bool testCcTrycatchcatch() = testCcMethod(|java+method:///Main/trycatchcatch(int,int)|, 3);
 test bool testCcTrycatchcatchfinally() = testCcMethod(|java+method:///Main/trycatchcatchfinally(int,int)|, 3);
 
-test bool testCcUnconditionalfor() = testCcMethod(|java+method:///Main/unconditionalfor(int,int)|, 2);
+test bool testCcUnconditionalfor() = testCcMethod(|java+method:///Main/unconditionalfor(int,int)|, 1);
 test bool testCcSimplefor() = testCcMethod(|java+method:///Main/simplefor(int,int)|, 2);
 test bool testCcForand() = testCcMethod(|java+method:///Main/forand(int,int)|, 3);
 test bool testCcForor() = testCcMethod(|java+method:///Main/foror(int,int)|, 3);
