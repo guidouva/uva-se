@@ -290,6 +290,16 @@ public class Main {
 		}
 	}
 	
+	static void trycatchcatch(int j, int i) {
+		try {
+			j = i;
+		} catch(RuntimeException e) {
+			j = 1;
+		} catch(Exception e) {
+			j = 1;
+		}
+	}
+	
 	static void trycatchcatchfinally(int j, int i) {
 		try {
 			j = i;
