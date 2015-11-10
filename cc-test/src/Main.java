@@ -290,6 +290,16 @@ public class Main {
 		}
 	}
 	
+	static void trycatchcatch(int j, int i) {
+		try {
+			j = i;
+		} catch(RuntimeException e) {
+			j = 1;
+		} catch(Exception e) {
+			j = 1;
+		}
+	}
+	
 	static void trycatchcatchfinally(int j, int i) {
 		try {
 			j = i;
@@ -349,6 +359,22 @@ public class Main {
 	
 	static void simpleassert(int j, int i) {
 		assert(j==i);
+	}
+	
+	static void assertand(int j, int i) {
+		assert(j==i && i == 1);
+	}
+	
+	static void assertor(int j, int i) {
+		assert(j==i || i == 1);
+	}
+	
+	static void assertandor(int j, int i) {
+		assert((j==i && j == 2) || i == 1);
+	}
+	
+	static void assertorand(int j, int i) {
+		assert((j==i || j == 2) && i == 1);
 	}
 	
 }
