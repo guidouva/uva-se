@@ -1,4 +1,4 @@
-module metrics::CodeHelpers
+module metrics::helpers::Code
 
 public str removeComments(str content) =
 	removeMultiLineComment(removeSingleLineComment(content));

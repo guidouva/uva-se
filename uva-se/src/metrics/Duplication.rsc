@@ -11,8 +11,8 @@ import Set;
 import util::Math;
 import util::Benchmark;
 
-import metrics::ModelHelpers;
-import metrics::CodeHelpers;
+import metrics::helpers::Model;
+import metrics::helpers::Code;
 
 alias line_t = str;
 

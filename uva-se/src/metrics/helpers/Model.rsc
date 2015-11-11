@@ -1,4 +1,4 @@
-module metrics::ModelHelpers
+module metrics::helpers::Model
 
 import Relation;
 

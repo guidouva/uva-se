@@ -6,8 +6,8 @@ import lang::java::m3::AST;
 
 import IO;
 
-import metrics::ModelHelpers;
-import metrics::CodeHelpers;
+import metrics::helpers::Model;
+import metrics::helpers::Code;
 
 public int totalMethodCyclomaticComplexity(M3 model) {
 	asts = { getMethodASTEclipse(method, model = model) | method <- methods(model) };
