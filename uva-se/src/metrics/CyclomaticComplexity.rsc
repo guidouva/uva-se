@@ -1,33 +1,30 @@
-module metrics::CyclicComplexity
+module metrics::CyclomaticComplexity
 
 import lang::java::m3::Core;
 import lang::java::jdt::m3::Core;
 import lang::java::m3::AST;
 
 import IO;
-import String;
-import Set;
-import List;
 
 import metrics::ModelHelpers;
 import metrics::CodeHelpers;
 
-public int cyclicComplexity(M3 model) {
+public int totalMethodCyclomaticComplexity(M3 model) {
 	asts = { getMethodASTEclipse(method, model = model) | method <- methods(model) };
-	return cyclicComplexity(asts);
+	return totalCyclomaticComplexity(asts);
 }
 
-// you can use this one for large projects as it uses less stack space than cyclicComplexity(M3)
-public int cyclicComplexity(loc project) {
+// you can use this one for large projects as it uses less stack space than cyclomaticComplexity(M3)
+public int totalMethodCyclomaticComplexity(loc project) {
 	asts = createAstsFromDirectory(project, false);
 	methodAsts = ({} | it + methods(ast) | ast <- asts);
-	return cyclicComplexity(methodAsts);
+	return totalCyclomaticComplexity(methodAsts);
 }
 
-public int cyclicComplexity(set[Declaration] asts) =
-	(0 | it + cyclicComplexity(ast) | ast <- asts);
+public int totalCyclomaticComplexity(set[Declaration] asts) =
+	(0 | it + cyclomaticComplexity(ast) | ast <- asts);
 
-public int cyclicComplexity(Declaration ast) {
+public int cyclomaticComplexity(Declaration ast) {
 	int count = 1;
 	
 	visit (ast) {
@@ -73,9 +70,9 @@ private int expressionComplexity(Expression expression) {
 
 private M3 cctestModel = createM3FromEclipseProject(|project://cc-test|);
 
-bool testCcMethod(loc method, int expectedCc) {
+private bool testCcMethod(loc method, int expectedCc) {
 	ast = getMethodASTEclipse(method, model = cctestModel);
-	actualCc = cyclicComplexity(ast);
+	actualCc = cyclomaticComplexity(ast);
 	//println("\<expected <expectedCc>, got <actualCc>\> <method>");
 	return actualCc == expectedCc;
 }
@@ -147,4 +144,4 @@ test bool testCcWhileandor() = testCcMethod(|java+method:///Main/whileandor(int,
 test bool testCcWhileor() = testCcMethod(|java+method:///Main/whileor(int,int)|, 3);
 test bool testCcWhileorand() = testCcMethod(|java+method:///Main/whileorand(int,int)|, 4);
 
-test bool testTestCc() = cyclicComplexity(cctestModel) == 151;
+test bool testTestCc() = totalMethodCyclomaticComplexity(cctestModel) == 151;
