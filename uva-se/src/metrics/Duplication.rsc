@@ -1,4 +1,4 @@
-module metrics::Duplicates
+module metrics::Duplication
 
 import lang::java::m3::Core;
 import lang::java::jdt::m3::Core;
@@ -16,33 +16,33 @@ import metrics::CodeHelpers;
 
 alias line_t = str;
 
-int numCloneLines(M3 model) {
+int numCloneLines(M3 model, bool verbose = true) {
 
 	\start = realTime()*1.0;
 
-	println("[1/4] loading lines of code into memory...");
+	if(verbose) println("[1/4] loading lines of code into memory...");
 
 	allText = (""
 		| it + readFile(location)+"\n"
 		| location <- classes(model)
 	);
 	
-	println("[2/4] removing comments...");
+	if(verbose) println("[2/4] removing comments...");
 	
 	allLines = [ trim(line) | line <- split("\n", removeComments(allText))
 						    , !isEmpty(trim(line)) ];
 
-	println("[3/4] indexing lines of code...");
+	if(verbose) println("[3/4] indexing lines of code...");
 	lineIndex = indexLines(allLines);
 	
-	println("[4/4] counting total lines of clones");
+	if(verbose) println("[4/4] counting total lines of clones");
 	
-	n = numCloneLines(6, allLines, lineIndex);
+	n = numCloneLines(6, allLines, lineIndex, verbose = verbose);
 	
 	end = realTime()*1.0;
 	seconds = (end - \start) / 1000;
 	
-	println("runtime: <seconds>s");
+	if(verbose) println("runtime: <seconds>s");
 	
 	return n;
 }
@@ -70,7 +70,7 @@ map[line_t,list[int]] indexLines(list[line_t] lines) {
 	return index;
 }
 
-public int numCloneLines(int threshold, list[line_t] lines, map[line_t,list[int]] index) {
+public int numCloneLines(int threshold, list[line_t] lines, map[line_t,list[int]] index, bool verbose = true) {
 	
 	totalSize = size(lines);
 	cloneLines = {};
@@ -80,11 +80,11 @@ public int numCloneLines(int threshold, list[line_t] lines, map[line_t,list[int]
 		lineNumbers = index[line];
 		numLines = size(lineNumbers);
 		
-		print("[<numLines>] <line>");
+		if(verbose) print("[<numLines>] <line>");
 		
 		for(i <- [0..numLines-1]) {
 			
-			print(".");
+			if(verbose) print(".");
 
 			if(totalSize - lineNumbers[i] < threshold)
 				continue;
@@ -102,7 +102,7 @@ public int numCloneLines(int threshold, list[line_t] lines, map[line_t,list[int]
 			}
 		}
 		
-		println("");
+		if(verbose) println("");
 		
 	}
 	
@@ -124,4 +124,4 @@ bool isClone(int threshold, list[line_t] lines, int aOffset, int bOffset) {
 }
 
 test bool testNumCloneLines() =
-	numCloneLines(createM3FromEclipseProject(|project://duplication-test|)) == 46;
+	numCloneLines(createM3FromEclipseProject(|project://duplication-test|), verbose=false) == 46;
