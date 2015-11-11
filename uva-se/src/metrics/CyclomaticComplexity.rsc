@@ -17,7 +17,7 @@ public int totalMethodCyclomaticComplexity(M3 model) {
 // you can use this one for large projects as it uses less stack space than cyclomaticComplexity(M3)
 public int totalMethodCyclomaticComplexity(loc project) {
 	asts = createAstsFromDirectory(project, false);
-	methodAsts = ({} | it + methods(ast) | ast <- asts);
+	methodAsts = ({} | it + methodDeclarations(ast) | ast <- asts);
 	return totalCyclomaticComplexity(methodAsts);
 }
 

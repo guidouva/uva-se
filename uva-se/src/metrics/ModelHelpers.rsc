@@ -9,7 +9,7 @@ import lang::java::jdt::m3::AST;
 public set[loc] compilationUnits(M3 model) =
 	{ l | l <- domain(model@containment), l.scheme == "java+compilationUnit" };
 	
-public set[Declaration] methods(Declaration ast) {
+public set[Declaration] methodDeclarations(Declaration ast) {
 	m = {};
 	
 	visit (ast) {
