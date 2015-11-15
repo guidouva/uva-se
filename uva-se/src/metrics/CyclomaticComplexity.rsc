@@ -9,22 +9,24 @@ import IO;
 import metrics::helpers::Model;
 import metrics::helpers::Code;
 
-public int totalMethodCyclomaticComplexity(M3 model) {
+import metrics::Volume;
+
+public list[tuple[int, int]] totalMethodCyclomaticComplexity(M3 model) {
 	asts = { getMethodASTEclipse(method, model = model) | method <- methods(model) };
 	return totalCyclomaticComplexity(asts);
 }
 
 // you can use this one for large projects as it uses less stack space than cyclomaticComplexity(M3)
-public int totalMethodCyclomaticComplexity(loc project) {
+public list[tuple[int, int]] totalMethodCyclomaticComplexity(loc project) {
 	asts = createAstsFromDirectory(project, false);
 	methodAsts = ({} | it + methodDeclarations(ast) | ast <- asts);
 	return totalCyclomaticComplexity(methodAsts);
 }
 
-public int totalCyclomaticComplexity(set[Declaration] asts) =
-	(0 | it + cyclomaticComplexity(ast) | ast <- asts);
+public list[tuple[int, int]] totalCyclomaticComplexity(set[Declaration] asts) =
+	[cyclomaticComplexity(ast) | ast <- asts];
 
-public int cyclomaticComplexity(Declaration ast) {
+public tuple[int, int] cyclomaticComplexity(Declaration ast) {
 	int count = 1;
 	
 	visit (ast) {
@@ -51,8 +53,8 @@ public int cyclomaticComplexity(Declaration ast) {
 	   	case \case(expr):
 	   		count += expressionComplexity(expr);
 	}
-	
-	return count;
+
+	return <count, LOC(ast@src)>;
 }
 
 private int expressionComplexity(Expression expression) {
@@ -72,7 +74,7 @@ private M3 cctestModel = createM3FromEclipseProject(|project://cc-test|);
 
 private bool testCcMethod(loc method, int expectedCc) {
 	ast = getMethodASTEclipse(method, model = cctestModel);
-	actualCc = cyclomaticComplexity(ast);
+	<actualCc, _> = cyclomaticComplexity(ast);
 	//println("\<expected <expectedCc>, got <actualCc>\> <method>");
 	return actualCc == expectedCc;
 }
