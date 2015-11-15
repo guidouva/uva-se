@@ -6,27 +6,33 @@ import lang::java::m3::AST;
 
 import IO;
 
+import Rank;
 import metrics::helpers::Model;
 import metrics::helpers::Code;
+import metrics::helpers::Rank;
 
-import metrics::Volume;
+public Rank rank(M3 model) = rank(cyclomaticComplexityPerMethod(model));
+public Rank rank(loc project) = rank(cyclomaticComplexityPerMethod(project));
 
-public list[tuple[int, int]] totalMethodCyclomaticComplexity(M3 model) {
-	asts = { getMethodASTEclipse(method, model = model) | method <- methods(model) };
-	return totalCyclomaticComplexity(asts);
+public Rank rank(list[tuple[int,int]] unitCCsAndLOC) = 
+	rankUnits(10, 20, 50, unitCCsAndLOC);
+
+public list[tuple[int,int]] cyclomaticComplexityPerMethod(M3 model) {
+	asts = [ getMethodASTEclipse(method, model = model) | method <- methods(model) ];
+	return cyclomaticComplexityPerUnit(asts);
 }
 
-// you can use this one for large projects as it uses less stack space than cyclomaticComplexity(M3)
-public list[tuple[int, int]] totalMethodCyclomaticComplexity(loc project) {
+// you can use this one for large projects as it uses less stack space than cyclomaticComplexityPerMethod(M3)
+public list[tuple[int,int]] cyclomaticComplexityPerMethod(loc project) {
 	asts = createAstsFromDirectory(project, false);
-	methodAsts = ({} | it + methodDeclarations(ast) | ast <- asts);
-	return totalCyclomaticComplexity(methodAsts);
+	methodAsts = ([] | it + methodDeclarations(ast) | ast <- asts);
+	return cyclomaticComplexityPerUnit(methodAsts);
 }
 
-public list[tuple[int, int]] totalCyclomaticComplexity(set[Declaration] asts) =
-	[cyclomaticComplexity(ast) | ast <- asts];
+private list[tuple[int,int]] cyclomaticComplexityPerUnit(list[Declaration] asts) =
+	[ <cyclomaticComplexity(ast), LOC(ast@src)> | ast <- asts ];
 
-public tuple[int, int] cyclomaticComplexity(Declaration ast) {
+private int cyclomaticComplexity(Declaration ast) {
 	int count = 1;
 	
 	visit (ast) {
@@ -54,7 +60,7 @@ public tuple[int, int] cyclomaticComplexity(Declaration ast) {
 	   		count += expressionComplexity(expr);
 	}
 
-	return <count, LOC(ast@src)>;
+	return count;
 }
 
 private int expressionComplexity(Expression expression) {
@@ -70,11 +76,11 @@ private int expressionComplexity(Expression expression) {
 	return count;
 }
 
-private M3 cctestModel = createM3FromEclipseProject(|project://cc-test|);
+private M3 modelTest = createM3FromEclipseProject(|project://cc-test|);
 
 private bool testCcMethod(loc method, int expectedCc) {
-	ast = getMethodASTEclipse(method, model = cctestModel);
-	<actualCc, _> = cyclomaticComplexity(ast);
+	ast = getMethodASTEclipse(method, model = modelTest);
+	actualCc = cyclomaticComplexity(ast);
 	//println("\<expected <expectedCc>, got <actualCc>\> <method>");
 	return actualCc == expectedCc;
 }
@@ -146,4 +152,4 @@ test bool testCcWhileandor() = testCcMethod(|java+method:///Main/whileandor(int,
 test bool testCcWhileor() = testCcMethod(|java+method:///Main/whileor(int,int)|, 3);
 test bool testCcWhileorand() = testCcMethod(|java+method:///Main/whileorand(int,int)|, 4);
 
-test bool testTestCc() = totalMethodCyclomaticComplexity(cctestModel) == 151;
+test bool testRank() = rank(modelTest) == Excellent();

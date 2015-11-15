@@ -4,15 +4,34 @@ import Set;
 
 import lang::java::m3::Core;
 import lang::java::jdt::m3::Core;
+import lang::java::m3::AST;
 
-import metrics::Volume;
+import Rank;
 
-import metrics::helpers::Model;
+import metrics::helpers::Code;
+import metrics::helpers::Rank;
 
-public real unitSize(M3 model) {
-	units = compilationUnits(model);
-	return (0 | it + LOC(unit) | unit <- units) / (size(units) * 1.0);
+public Rank rank(M3 model) = rank(sizePerMethod(model));
+public Rank rank(loc project) = rank(sizePerMethod(project));
+
+public Rank rank(list[tuple[int,int]] unitSizesAndLOC) = 
+	rankUnits(20, 50, 100, unitSizesAndLOC);
+
+public list[tuple[int,int]] sizePerMethod(M3 model) {
+	asts = [ getMethodASTEclipse(method, model = model) | method <- methods(model) ];
+	return sizePerUnit(asts);
 }
 
-test bool unitSizeTest() =
-	unitSize(createM3FromEclipseProject(|project://volume-test|)) == 9.;
+// you can use this one for large projects as it uses less stack space than sizePerMethod(M3)
+public list[tuple[int,int]] sizePerMethod(loc project) {
+	asts = createAstsFromDirectory(project, false);
+	methodAsts = ([] | it + methodDeclarations(ast) | ast <- asts);
+	return sizePerUnit(methodAsts);
+}
+
+private list[tuple[int,int]] sizePerUnit(list[Declaration] asts) =
+	[ <LOC(ast@src), LOC(ast@src)> | ast <- asts  ];
+	
+private M3 modelTest = createM3FromEclipseProject(|project://volume-test|);
+	
+test bool testRank() = rank(modelTest) == Excellent();

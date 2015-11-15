@@ -12,93 +12,60 @@ import Map;
 import util::Math;
 import util::Benchmark;
 
+import Rank;
 import metrics::helpers::Model;
 import metrics::helpers::Code;
 
-alias line_t = str;
+public Rank rank(M3 model, bool verbose = true) {
+	<clonedLines, linesOfCode> = findClones(6, model, verbose = verbose);
+	return rank(clonedLines, linesOfCode);
+}
 
-int numClonedLines(M3 model, bool verbose = true) {
+public Rank rank(int clonedLines, int totalLines) {
+	duplicationPercentage = clonedLines * 1.0 / totalLines;
+	
+	if (duplicationPercentage < .03)
+		return Excellent();
+	if (duplicationPercentage < .05)
+		return Good();
+	if (duplicationPercentage < .1)
+		return Neutral();
+	if (duplicationPercentage < .2)
+		return Bad();
+	return Dismal();
+}
 
+public tuple[int,int] findClones(
+	int threshold, M3 model, bool verbose = true
+) {
 	\start = realTime()*1.0;
 
-	if(verbose) println("[1/4] loading lines of code into memory...");
+	if(verbose) println("[1/3] loading lines of code into memory...");
 
 	allText = (""
 		| it + readFile(location)+"\n"
 		| location <- classes(model)
 	);
 	
-	if(verbose) println("[2/4] removing comments...");
+	if(verbose) println("[2/3] removing comments...");
 	
 	allLines = [ line | line <- split("\n", removeComments(allText))
 					  , !isEmpty(trim(line)) ];
 			
 	allTrimmedLines = [ trim(line) | line <- allLines ];
 
-	if(verbose) println("[3/4] indexing lines of code...");
-
-	fullLineIndex = indexLines(allTrimmedLines);
-	lineIndex = domainR(fullLineIndex, { line | line <- fullLineIndex, size(fullLineIndex[line]) > 1 });	
-
-	if(verbose) println("[4/4] searching for clones");
-	
-	<clonedLines,clones> = findClones(6, allTrimmedLines, lineIndex, verbose = verbose);
-
-	if(verbose) printClones(6, allLines, allTrimmedLines, clones);
-	
-	end = realTime()*1.0;
-	seconds = (end - \start) / 1000;
-	
-	if(verbose) println("runtime: <seconds>s");
-	
-	return size(clonedLines);
-}
-
-void printClones(int threshold, list[line_t] lines, list[line_t] trimmedLines, map[int,set[int]] clones) {
-	// sort in order of duplicate occurrences
-	blocks = sort([ line | line <- clones ], bool(int a, int b){
-		return size(clones[a]) > size(clones[b]);
-	});
-	
-	totalClonesFound = 0;
-
-	printedBlocks = {};
-	for(block <- blocks,
-		clones[block] - printedBlocks == clones[block]) {
-
-		println("FOUND <size(clones[block])+1> TIMES:");
-		for(line <- [block..block+threshold]) println(lines[line]);
-
-		totalClonesFound += size(clones[block])+1;
-		printedBlocks += block;
-		println("");
-
+	if(verbose) {
+		println("[3/3] searching for clones");
+		println("indexing lines...");
 	}
-	
-	println("FOUND <totalClonesFound> CLONES IN TOTAL");
-}
 
-map[line_t,list[int]] indexLines(list[line_t] lines) {
-	map[line_t,list[int]] index = ();
-
-	for(i <- [0..size(lines)]) {
-		line = lines[i];
-		if(line notin index) {
-			index[line] = [i];
-		} else {
-			index[line] += i;
-		}
-	}	
+	fullIndex = indexLines(allTrimmedLines);
+	map[str,list[int]] index = domainR(fullIndex, { line | line <- fullIndex, size(fullIndex[line]) > 1 });
 	
-	return index;
-}
-
-public tuple[set[int], map[int,set[int]]] findClones(
-	int threshold, list[line_t] lines, map[line_t,list[int]] index,
-    bool verbose = true
-) {
+	totalSize = size(allTrimmedLines);
 	
-	totalSize = size(lines);
+	if(verbose) println("totalSize: <totalSize>");
+
 	clonedLines = {};
 	clones = ();
 	
@@ -123,7 +90,7 @@ public tuple[set[int], map[int,set[int]]] findClones(
 					|| abs(lineNumbers[i] - lineNumbers[j]) < threshold)
 					continue;
 					
-				if(isClone(threshold, lines, lineNumbers[i], lineNumbers[j])) {
+				if(isClone(threshold, allTrimmedLines, lineNumbers[i], lineNumbers[j])) {
 					clonedLines += { lineNumbers[i] + k, lineNumbers[j] + k | k <- [0..threshold] };
 
 					if(lineNumbers[i] notin clones) clones[lineNumbers[i]] = {};
@@ -139,14 +106,59 @@ public tuple[set[int], map[int,set[int]]] findClones(
 		
 	}
 	
-	if(verbose) println("");
+	if(verbose) {
+		println("");
+		printClones(threshold, allLines, clones);
+	}
 	
-	return <clonedLines,clones>;
+	end = realTime()*1.0;
+	seconds = (end - \start) / 1000;
 	
+	if(verbose) println("runtime: <seconds>s");
+	
+	return <size(clonedLines), totalSize>;
 }
 
-bool isClone(int threshold, list[line_t] lines, int aOffset, int bOffset) {
+private void printClones(int threshold, list[str] lines, map[int,set[int]] clones) {
+	// sort in order of duplicate occurrences
+	blocks = sort([ line | line <- clones ], bool(int a, int b){
+		return size(clones[a]) > size(clones[b]);
+	});
+	
+	totalClonesFound = 0;
 
+	printedBlocks = {};
+	for(block <- blocks,
+		clones[block] - printedBlocks == clones[block]) {
+
+		println("FOUND <size(clones[block])+1> TIMES:");
+		for(line <- [block..block+threshold]) println(lines[line]);
+
+		totalClonesFound += size(clones[block])+1;
+		printedBlocks += block;
+		println("");
+
+	}
+	
+	println("FOUND <totalClonesFound> CLONES IN TOTAL");
+}
+
+private map[str,list[int]] indexLines(list[str] lines) {
+	map[str,list[int]] index = ();
+
+	for(i <- [0..size(lines)]) {
+		line = lines[i];
+		if(line notin index) {
+			index[line] = [i];
+		} else {
+			index[line] += i;
+		}
+	}	
+	
+	return index;
+}
+
+private bool isClone(int threshold, list[str] lines, int aOffset, int bOffset) {
 	cloneSize = 0;	
 
 	while(cloneSize < threshold
@@ -155,8 +167,13 @@ bool isClone(int threshold, list[line_t] lines, int aOffset, int bOffset) {
 	}
 	
 	return cloneSize == threshold;
-	
 }
 
-test bool testNumCloneLines() =
-	numClonedLines(createM3FromEclipseProject(|project://duplication-test|), verbose=false) == 46;
+private M3 modelTest = createM3FromEclipseProject(|project://duplication-test|);
+
+test bool testFindClones() {
+	<clonedLines, _> = findClones(6, modelTest, verbose=false);
+	return clonedLines == 46;
+}
+
+test bool testRank() = rank(modelTest, verbose=false) == Dismal();
