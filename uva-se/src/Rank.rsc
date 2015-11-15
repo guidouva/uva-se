@@ -15,13 +15,13 @@ public Rank average(list[Rank] ranks) {
 	return toRank(sum * 1.0 / size(ranks));
 }
 
-public int fromRank(Excellent()) = 2;
-public int fromRank(Good())      = 1;
-public int fromRank(Neutral())   = 0;
-public int fromRank(Bad())       = -1;
-public int fromRank(Dismal())    = -2;
+private int fromRank(Excellent()) = 2;
+private int fromRank(Good())      = 1;
+private int fromRank(Neutral())   = 0;
+private int fromRank(Bad())       = -1;
+private int fromRank(Dismal())    = -2;
 
-public Rank toRank(num rank) {
+private Rank toRank(num rank) {
 	if(rank < -1.5) return Dismal();
 	if(rank < -0.5) return Bad();
 	if(rank < 0.5) return Neutral();
