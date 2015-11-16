@@ -1,5 +1,5 @@
 
-public class Main {
+public class CCMain {
 	
 	static int seq(int j, int i) {
 		return j + i;

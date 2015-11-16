@@ -1,6 +1,6 @@
 import lib.Factorial;
 
-public class Main {
+public class VolumeMain {
 	
 	// ignore this line
 	

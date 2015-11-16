@@ -1,5 +1,7 @@
 module Rank
 
+import util::Math;
+
 import List;
 
 public data Rank =

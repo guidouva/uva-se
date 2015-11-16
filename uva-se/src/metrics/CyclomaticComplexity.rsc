@@ -23,11 +23,8 @@ public list[tuple[int,int]] cyclomaticComplexityPerMethod(M3 model) {
 	return cyclomaticComplexityPerUnit(methodAsts);
 }
 
-// TODO: weet niet of zo de comments worden gefiltered bij het tellen van regels.
-// punt is, LOC(ast@src) is zo ontiegelijk langzaam...
 private list[tuple[int,int]] cyclomaticComplexityPerUnit(list[Declaration] asts) =
-	[ <cyclomaticComplexity(ast), ast@src.end.line - ast@src.begin.line> | ast <- asts ];
-	//[ <cyclomaticComplexity(ast), LOC(ast@src)> | ast <- asts ];
+	[ <cyclomaticComplexity(ast), LOC(ast@src)> | ast <- asts ];
 
 private int cyclomaticComplexity(Declaration ast) {
 	int count = 1;
@@ -82,71 +79,71 @@ private bool testCcMethod(loc method, int expectedCc) {
 	return actualCc == expectedCc;
 }
 
-test bool testCcAssertand() = testCcMethod(|java+method:///Main/assertand(int,int)|, 3);
-test bool testCcAssertandor() = testCcMethod(|java+method:///Main/assertandor(int,int)|, 4);
-test bool testCcAssertor() = testCcMethod(|java+method:///Main/assertor(int,int)|, 3);
-test bool testCcAssertorand() = testCcMethod(|java+method:///Main/assertorand(int,int)|, 4);
+test bool testCcAssertand() = testCcMethod(|java+method:///CCMain/assertand(int,int)|, 3);
+test bool testCcAssertandor() = testCcMethod(|java+method:///CCMain/assertandor(int,int)|, 4);
+test bool testCcAssertor() = testCcMethod(|java+method:///CCMain/assertor(int,int)|, 3);
+test bool testCcAssertorand() = testCcMethod(|java+method:///CCMain/assertorand(int,int)|, 4);
 
-test bool testCcCond() = testCcMethod(|java+method:///Main/cond(int,int)|, 2);
-test bool testCcCondand() = testCcMethod(|java+method:///Main/condand(int,int)|, 3);
-test bool testCcCondandor() = testCcMethod(|java+method:///Main/condandor(int,int)|, 4);
-test bool testCcCondor() = testCcMethod(|java+method:///Main/condor(int,int)|, 3);
-test bool testCcCondorand() = testCcMethod(|java+method:///Main/condorand(int,int)|, 4);
+test bool testCcCond() = testCcMethod(|java+method:///CCMain/cond(int,int)|, 2);
+test bool testCcCondand() = testCcMethod(|java+method:///CCMain/condand(int,int)|, 3);
+test bool testCcCondandor() = testCcMethod(|java+method:///CCMain/condandor(int,int)|, 4);
+test bool testCcCondor() = testCcMethod(|java+method:///CCMain/condor(int,int)|, 3);
+test bool testCcCondorand() = testCcMethod(|java+method:///CCMain/condorand(int,int)|, 4);
 
-test bool testCcDoand() = testCcMethod(|java+method:///Main/doand(int,int)|, 3);
-test bool testCcDoandor() = testCcMethod(|java+method:///Main/doandor(int,int)|, 4);
-test bool testCcDoor() = testCcMethod(|java+method:///Main/door(int,int)|, 3);
-test bool testCcDoorand() = testCcMethod(|java+method:///Main/doorand(int,int)|, 4);
+test bool testCcDoand() = testCcMethod(|java+method:///CCMain/doand(int,int)|, 3);
+test bool testCcDoandor() = testCcMethod(|java+method:///CCMain/doandor(int,int)|, 4);
+test bool testCcDoor() = testCcMethod(|java+method:///CCMain/door(int,int)|, 3);
+test bool testCcDoorand() = testCcMethod(|java+method:///CCMain/doorand(int,int)|, 4);
 
-test bool testCcForand() = testCcMethod(|java+method:///Main/forand(int,int)|, 3);
-test bool testCcForandor() = testCcMethod(|java+method:///Main/forandor(int,int)|, 4);
-test bool testCcForin() = testCcMethod(|java+method:///Main/forin(int,int)|, 2);
-test bool testCcForor() = testCcMethod(|java+method:///Main/foror(int,int)|, 3);
-test bool testCcFororand() = testCcMethod(|java+method:///Main/fororand(int,int)|, 4);
+test bool testCcForand() = testCcMethod(|java+method:///CCMain/forand(int,int)|, 3);
+test bool testCcForandor() = testCcMethod(|java+method:///CCMain/forandor(int,int)|, 4);
+test bool testCcForin() = testCcMethod(|java+method:///CCMain/forin(int,int)|, 2);
+test bool testCcForor() = testCcMethod(|java+method:///CCMain/foror(int,int)|, 3);
+test bool testCcFororand() = testCcMethod(|java+method:///CCMain/fororand(int,int)|, 4);
 
-test bool testCcIfand() = testCcMethod(|java+method:///Main/ifand(int,int)|, 3);
-test bool testCcIfandor() = testCcMethod(|java+method:///Main/ifandor(int,int)|, 4);
-test bool testCcIfelse() = testCcMethod(|java+method:///Main/ifelse(int,int)|, 2);
-test bool testCcIfelseif() = testCcMethod(|java+method:///Main/ifelseif(int,int)|, 3);
-test bool testCcIfelseifelse() = testCcMethod(|java+method:///Main/ifelseifelse(int,int)|, 3);
-test bool testCcIfor() = testCcMethod(|java+method:///Main/ifor(int,int)|, 3);
-test bool testCcIforand() = testCcMethod(|java+method:///Main/iforand(int,int)|, 4);
+test bool testCcIfand() = testCcMethod(|java+method:///CCMain/ifand(int,int)|, 3);
+test bool testCcIfandor() = testCcMethod(|java+method:///CCMain/ifandor(int,int)|, 4);
+test bool testCcIfelse() = testCcMethod(|java+method:///CCMain/ifelse(int,int)|, 2);
+test bool testCcIfelseif() = testCcMethod(|java+method:///CCMain/ifelseif(int,int)|, 3);
+test bool testCcIfelseifelse() = testCcMethod(|java+method:///CCMain/ifelseifelse(int,int)|, 3);
+test bool testCcIfor() = testCcMethod(|java+method:///CCMain/ifor(int,int)|, 3);
+test bool testCcIforand() = testCcMethod(|java+method:///CCMain/iforand(int,int)|, 4);
 
-test bool testCcMain() = testCcMethod(|java+method:///Main/main(java.lang.String%5B%5D)|, 1);
+test bool testCcCCMain() = testCcMethod(|java+method:///CCMain/main(java.lang.String%5B%5D)|, 1);
 
-test bool testCcNestedcond() = testCcMethod(|java+method:///Main/nestedcond(int,int)|, 3);
-test bool testCcNesteddo() = testCcMethod(|java+method:///Main/nesteddo(int,int)|, 3);
-test bool testCcNestedfor() = testCcMethod(|java+method:///Main/nestedfor(int,int)|, 3);
-test bool testCcNestedif() = testCcMethod(|java+method:///Main/nestedif(int,int)|, 3);
-test bool testCcNestedswitch() = testCcMethod(|java+method:///Main/nestedswitch(int,int)|, 3);
-test bool testCcNestedwhile() = testCcMethod(|java+method:///Main/nestedwhile(int,int)|, 3);
+test bool testCcNestedcond() = testCcMethod(|java+method:///CCMain/nestedcond(int,int)|, 3);
+test bool testCcNesteddo() = testCcMethod(|java+method:///CCMain/nesteddo(int,int)|, 3);
+test bool testCcNestedfor() = testCcMethod(|java+method:///CCMain/nestedfor(int,int)|, 3);
+test bool testCcNestedif() = testCcMethod(|java+method:///CCMain/nestedif(int,int)|, 3);
+test bool testCcNestedswitch() = testCcMethod(|java+method:///CCMain/nestedswitch(int,int)|, 3);
+test bool testCcNestedwhile() = testCcMethod(|java+method:///CCMain/nestedwhile(int,int)|, 3);
 
-test bool testCcSeq() = testCcMethod(|java+method:///Main/seq(int,int)|, 1);
+test bool testCcSeq() = testCcMethod(|java+method:///CCMain/seq(int,int)|, 1);
 
-test bool testCcSimpleassert() = testCcMethod(|java+method:///Main/simpleassert(int,int)|, 2);
-test bool testCcSimpledo() = testCcMethod(|java+method:///Main/simpledo(int,int)|, 2);
-test bool testCcSimplefor() = testCcMethod(|java+method:///Main/simplefor(int,int)|, 2);
-test bool testCcSimplewhile() = testCcMethod(|java+method:///Main/simplewhile(int,int)|, 2);
+test bool testCcSimpleassert() = testCcMethod(|java+method:///CCMain/simpleassert(int,int)|, 2);
+test bool testCcSimpledo() = testCcMethod(|java+method:///CCMain/simpledo(int,int)|, 2);
+test bool testCcSimplefor() = testCcMethod(|java+method:///CCMain/simplefor(int,int)|, 2);
+test bool testCcSimplewhile() = testCcMethod(|java+method:///CCMain/simplewhile(int,int)|, 2);
 
-test bool testCcSwitch1() = testCcMethod(|java+method:///Main/switch1(int,int)|, 2);
-test bool testCcSwitch1default() = testCcMethod(|java+method:///Main/switch1default(int,int)|, 2);
-test bool testCcSwitch2() = testCcMethod(|java+method:///Main/switch2(int,int)|, 3);
-test bool testCcSwitch2default() = testCcMethod(|java+method:///Main/switch2default(int,int)|, 3);
-test bool testCcSwitch2nobreak() = testCcMethod(|java+method:///Main/switch2nobreak(int,int)|, 3);
+test bool testCcSwitch1() = testCcMethod(|java+method:///CCMain/switch1(int,int)|, 2);
+test bool testCcSwitch1default() = testCcMethod(|java+method:///CCMain/switch1default(int,int)|, 2);
+test bool testCcSwitch2() = testCcMethod(|java+method:///CCMain/switch2(int,int)|, 3);
+test bool testCcSwitch2default() = testCcMethod(|java+method:///CCMain/switch2default(int,int)|, 3);
+test bool testCcSwitch2nobreak() = testCcMethod(|java+method:///CCMain/switch2nobreak(int,int)|, 3);
 
-test bool testCcTheif() = testCcMethod(|java+method:///Main/theif(int,int)|, 2);
+test bool testCcTheif() = testCcMethod(|java+method:///CCMain/theif(int,int)|, 2);
 
-test bool testCcTrycatch() = testCcMethod(|java+method:///Main/trycatch(int,int)|, 2);
-test bool testCcTrycatchcatch() = testCcMethod(|java+method:///Main/trycatchcatch(int,int)|, 3);
-test bool testCcTrycatchcatchfinally() = testCcMethod(|java+method:///Main/trycatchcatchfinally(int,int)|, 3);
-test bool testCcTrycatchfinally() = testCcMethod(|java+method:///Main/trycatchfinally(int,int)|, 2);
-test bool testCcTryfinally() = testCcMethod(|java+method:///Main/tryfinally(int,int)|, 1);
+test bool testCcTrycatch() = testCcMethod(|java+method:///CCMain/trycatch(int,int)|, 2);
+test bool testCcTrycatchcatch() = testCcMethod(|java+method:///CCMain/trycatchcatch(int,int)|, 3);
+test bool testCcTrycatchcatchfinally() = testCcMethod(|java+method:///CCMain/trycatchcatchfinally(int,int)|, 3);
+test bool testCcTrycatchfinally() = testCcMethod(|java+method:///CCMain/trycatchfinally(int,int)|, 2);
+test bool testCcTryfinally() = testCcMethod(|java+method:///CCMain/tryfinally(int,int)|, 1);
 
-test bool testCcUnconditionalfor() = testCcMethod(|java+method:///Main/unconditionalfor(int,int)|, 1);
+test bool testCcUnconditionalfor() = testCcMethod(|java+method:///CCMain/unconditionalfor(int,int)|, 1);
 
-test bool testCcWhileand() = testCcMethod(|java+method:///Main/whileand(int,int)|, 3);
-test bool testCcWhileandor() = testCcMethod(|java+method:///Main/whileandor(int,int)|, 4);
-test bool testCcWhileor() = testCcMethod(|java+method:///Main/whileor(int,int)|, 3);
-test bool testCcWhileorand() = testCcMethod(|java+method:///Main/whileorand(int,int)|, 4);
+test bool testCcWhileand() = testCcMethod(|java+method:///CCMain/whileand(int,int)|, 3);
+test bool testCcWhileandor() = testCcMethod(|java+method:///CCMain/whileandor(int,int)|, 4);
+test bool testCcWhileor() = testCcMethod(|java+method:///CCMain/whileor(int,int)|, 3);
+test bool testCcWhileorand() = testCcMethod(|java+method:///CCMain/whileorand(int,int)|, 4);
 
 test bool testRank() = rank(modelTest) == Excellent();

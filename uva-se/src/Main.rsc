@@ -8,7 +8,7 @@ import QualityCharacteristic;
 import SourceProperty;
 
 
-public map[QualityCharacteristic, Rank] rank(
+public tuple[map[SourceProperty, Rank], map[QualityCharacteristic, Rank]] rank(
 	set[QualityCharacteristic] qualityCharacteristics,
 	M3 model,
 	bool verbose = true
@@ -21,5 +21,9 @@ public map[QualityCharacteristic, Rank] rank(
 		property : rank(property, model, verbose) | property <- relevantProperties
 	);
 
-	return (characteristic : rank(characteristic, propertyRanks) | characteristic <- qualityCharacteristics);
+	map[QualityCharacteristic, Rank] characteristicRanks = (
+		characteristic : rank(characteristic, propertyRanks) | characteristic <- qualityCharacteristics
+	);
+	
+	return <propertyRanks, characteristicRanks>;
 }

@@ -6,7 +6,7 @@ import static java.lang.Math.PI;
 import static java.lang.Math.PI;
 import static java.lang.Math.PI;
 
-public class Main {
+public class DuplicationMain {
 	private int x = 3;
 	private int y = 3;
 	private int z = 3;
