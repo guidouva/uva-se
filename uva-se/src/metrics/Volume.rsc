@@ -24,7 +24,7 @@ public Rank rank(int linesOfCode) {
 }
 
 public int LOC(M3 model) =
-	(0 | it + LOC(readFile(l)) | l <- compilationUnits(model));
+	LOC(("" | it + readFile(l)+"\n" | l <- compilationUnits(model)));
 	
 private M3 modelTest = createM3FromEclipseProject(|project://volume-test|);
 

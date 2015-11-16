@@ -9,15 +9,16 @@ import lang::java::jdt::m3::AST;
 public set[loc] compilationUnits(M3 model) =
 	{ l | l <- domain(model@containment), l.scheme == "java+compilationUnit" };
 	
-public set[Declaration] methodDeclarations(Declaration ast) {
-	m = {};
+public set[Declaration] methodDeclarationsWithBody(Declaration ast) {
+	set[Declaration] methods = {};
 	
 	visit (ast) {
-	case \method(Type \return, str name, list[Declaration] parameters, list[Expression] exceptions, Statement impl):
-		m += \method(\return, name, parameters, exceptions, impl);	
-	case \method(Type \return, str name, list[Declaration] parameters, list[Expression] exceptions):
-		m += \method(\return, name, parameters, exceptions);	
+	case m : \method(Type \return, str name, list[Declaration] parameters, list[Expression] exceptions, Statement impl): {
+			mm = \method(\return, name, parameters, exceptions, impl);	
+			mm@src = m@src;
+			methods += mm;
+		}
 	}
 	
-	return m;
+	return methods;
 }

@@ -1,36 +1,30 @@
 module metrics::CyclomaticComplexity
 
+import Set;
+
 import lang::java::m3::Core;
 import lang::java::jdt::m3::Core;
-import lang::java::m3::AST;
-
-import IO;
+import lang::java::jdt::m3::AST;
 
 import Rank;
+
 import metrics::helpers::Model;
 import metrics::helpers::Code;
 import metrics::helpers::Rank;
 
 public Rank rank(M3 model) = rank(cyclomaticComplexityPerMethod(model));
-public Rank rank(loc project) = rank(cyclomaticComplexityPerMethod(project));
 
 public Rank rank(list[tuple[int,int]] unitCCsAndLOC) = 
 	rankUnits(10, 20, 50, unitCCsAndLOC);
 
 public list[tuple[int,int]] cyclomaticComplexityPerMethod(M3 model) {
-	asts = [ getMethodASTEclipse(method, model = model) | method <- methods(model) ];
-	return cyclomaticComplexityPerUnit(asts);
-}
-
-// you can use this one for large projects as it uses less stack space than cyclomaticComplexityPerMethod(M3)
-public list[tuple[int,int]] cyclomaticComplexityPerMethod(loc project) {
-	asts = createAstsFromDirectory(project, false);
-	methodAsts = ([] | it + methodDeclarations(ast) | ast <- asts);
+	asts = createAstsFromEclipseProject(model.id, false);
+	methodAsts = ([] | it + toList(methodDeclarationsWithBody(ast)) | ast <- asts);
 	return cyclomaticComplexityPerUnit(methodAsts);
 }
 
 private list[tuple[int,int]] cyclomaticComplexityPerUnit(list[Declaration] asts) =
-	[ <cyclomaticComplexity(ast), LOC(ast@src)> | ast <- asts ];
+	[ <cyclomaticComplexity(ast), ast@src.end.line - ast@src.begin.line> | ast <- asts ];
 
 private int cyclomaticComplexity(Declaration ast) {
 	int count = 1;
