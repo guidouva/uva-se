@@ -25,6 +25,7 @@ public list[tuple[int,int]] cyclomaticComplexityPerMethod(M3 model) {
 
 private list[tuple[int,int]] cyclomaticComplexityPerUnit(list[Declaration] asts) =
 	[ <cyclomaticComplexity(ast), ast@src.end.line - ast@src.begin.line> | ast <- asts ];
+	//[ <cyclomaticComplexity(ast), LOC(ast@src)> | ast <- asts ];
 
 private int cyclomaticComplexity(Declaration ast) {
 	int count = 1;
