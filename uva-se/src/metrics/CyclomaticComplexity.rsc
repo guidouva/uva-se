@@ -23,6 +23,8 @@ public list[tuple[int,int]] cyclomaticComplexityPerMethod(M3 model) {
 	return cyclomaticComplexityPerUnit(methodAsts);
 }
 
+// TODO: weet niet of zo de comments worden gefiltered bij het tellen van regels.
+// punt is, LOC(ast@src) is zo ontiegelijk langzaam...
 private list[tuple[int,int]] cyclomaticComplexityPerUnit(list[Declaration] asts) =
 	[ <cyclomaticComplexity(ast), ast@src.end.line - ast@src.begin.line> | ast <- asts ];
 	//[ <cyclomaticComplexity(ast), LOC(ast@src)> | ast <- asts ];

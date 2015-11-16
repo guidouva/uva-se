@@ -23,6 +23,8 @@ public list[tuple[int,int]] sizePerMethod(M3 model) {
 	return sizePerUnit(methodAsts);
 }
 
+// TODO: weet niet of zo de comments worden gefiltered bij het tellen van regels.
+// punt is, LOC(ast@src) is zo ontiegelijk langzaam...
 private list[tuple[int,int]] sizePerUnit(list[Declaration] asts) =
 	[ <\loc, \loc> | ast <- asts, \loc := ast@src.end.line - ast@src.begin.line ];
 	//[ <\loc, \loc> | ast <- asts, \loc := LOC(ast@src) ];
