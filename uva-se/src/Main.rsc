@@ -1,4 +1,4 @@
-module Core
+module Main
 
 import List;
 import lang::java::m3::Core;
