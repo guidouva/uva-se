@@ -29,13 +29,13 @@ public tuple[real, real, real] riskProfile(int moderateThreshold, int highThresh
 public Rank rankProfile(tuple[real, real, real] profile) {
 	<moderatePercentage, highPercentage, veryHighPercentage> = profile;
 	
-	if (moderatePercentage < 25 && ceil(highPercentage) == 0 && ceil(veryHighPercentage) == 0)
+	if (moderatePercentage < 0.25 && ceil(highPercentage) == 0 && ceil(veryHighPercentage) == 0)
 		return Excellent();
-	if (moderatePercentage < 30 && highPercentage < 5 && ceil(veryHighPercentage) == 0)
+	if (moderatePercentage < 0.30 && highPercentage < 0.05 && ceil(veryHighPercentage) == 0)
 		return Good();
-	if (moderatePercentage < 40 && highPercentage < 10 && ceil(veryHighPercentage) == 0)
+	if (moderatePercentage < 0.40 && highPercentage < 0.10 && ceil(veryHighPercentage) == 0)
 		return Neutral();
-	if (moderatePercentage < 50 && highPercentage < 15 && veryHighPercentage < 5)
+	if (moderatePercentage < 0.50 && highPercentage < 0.15 && veryHighPercentage < 0.05)
 		return Bad();
 
 	return Dismal();
