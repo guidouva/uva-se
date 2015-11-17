@@ -92,7 +92,8 @@ private tuple[map[list[str], list[tuple[loc, int]]], int] splitInBlocksOf(set[lo
 	allLines = removeComments(allLines);
 	list[str] fileTexts = split("\n===== FILE ENDER LINE =====\n", allLines);
 	
-	//list[str] filesTexts = ([] | it + removeComments(readFile(file)) | file <- files);
+	//list[str] fileTexts = [removeComments(readFile(file)) | file <- files];
+	
 	int fileId = 0;
 	
 	for (str fileText <- fileTexts) {

@@ -1,6 +1,7 @@
 module metrics::CyclomaticComplexity
 
 import Set;
+import List;
 
 import lang::java::m3::Core;
 import lang::java::jdt::m3::Core;
@@ -24,8 +25,16 @@ public list[tuple[int,int]] cyclomaticComplexityPerMethod(M3 model) {
 	return cyclomaticComplexityPerUnit(methodAsts);
 }
 
-private list[tuple[int,int]] cyclomaticComplexityPerUnit(list[Declaration] asts) =
-	[ <cyclomaticComplexity(ast), LOC(ast@src)> | ast <- asts ];
+private list[tuple[int,int]] cyclomaticComplexityPerUnit(list[Declaration] asts) {
+	srcs = [ast@src | ast <- asts];
+	locs = LOC(srcs);
+	
+	list[tuple[int, int]] ccPerUnit = [];
+	for (i <- [0 .. size(asts)]) {
+		ccPerUnit += <cyclomaticComplexity(asts[i]), locs[i]>;
+	}
+	return ccPerUnit;
+}
 
 private int cyclomaticComplexity(Declaration ast) {
 	int count = 1;
