@@ -17,6 +17,12 @@ public Rank average(list[Rank] ranks) {
 	return toRank(sum * 1.0 / size(ranks));
 }
 
+public str toString(Excellent()) = "rank = ++";
+public str toString(Good()) = "rank = +";
+public str toString(Neutral()) = "rank = o";
+public str toString(Bad()) = "rank = -";
+public str toString(Dismal()) = "rank = --";
+
 private int fromRank(Excellent()) = 2;
 private int fromRank(Good())      = 1;
 private int fromRank(Neutral())   = 0;

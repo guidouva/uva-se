@@ -11,6 +11,18 @@ public data QualityCharacteristic =
   | Maintainability();
  
 
+public Rank rank(Maintainability(), map[SourceProperty, Rank] propertyRanks)
+	= average([rank(characteristic, propertyRanks) | characteristic <- [Analysability(), Changeability(), Testability()]]);
+
+public default Rank rank(QualityCharacteristic characteristic, map[SourceProperty, Rank] propertyRanks)
+	= average([propertyRanks[property] | property <- relevantSourceProperties(characteristic)]);
+	
+
+public str toString(Analysability()) = "analysability";
+public str toString(Changeability()) = "changeability";
+public str toString(Testability()) = "testability";
+public str toString(Maintainability()) = "maintainability";
+
 public set[SourceProperty] relevantSourceProperties(Analysability())
 	= {Volume(), Duplication(), UnitSize()};
 	
@@ -24,13 +36,6 @@ public set[SourceProperty] relevantSourceProperties(Maintainability())
 	= union({relevantSourceProperties(Analysability())
 			,relevantSourceProperties(Changeability())
 			,relevantSourceProperties(Testability())});
-
-			
-public Rank rank(Maintainability(), map[SourceProperty, Rank] propertyRanks)
-	= average([rank(characteristic, propertyRanks) | characteristic <- [Analysability(), Changeability(), Testability()]]);
-
-public default Rank rank(QualityCharacteristic characteristic, map[SourceProperty, Rank] propertyRanks)
-	= average([propertyRanks[property] | property <- relevantSourceProperties(characteristic)]);
 
 private map[SourceProperty, Rank] fig5test = (
 	Volume() : Excellent(),
