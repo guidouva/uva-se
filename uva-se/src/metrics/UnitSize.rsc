@@ -24,9 +24,11 @@ public list[tuple[int,int]] sizePerMethod(M3 model) {
 	return sizePerUnit(methodAsts);
 }
 
-private list[tuple[int,int]] sizePerUnit(list[Declaration] asts) =
-	[ <\loc, \loc> | ast <- asts, \loc := LOC(ast@src) ];
-	
+private list[tuple[int,int]] sizePerUnit(list[Declaration] asts) {
+	srcs = [ast@src | ast <- asts];
+	return [ <\loc, \loc> | \loc <- LOC(srcs)];
+}
+
 private M3 modelTest = createM3FromEclipseProject(|project://volume-test|);
 	
 test bool testRank() = rank(modelTest) == <Excellent(), RiskProfile(1.0,0.0,0.0,0.0)>;
