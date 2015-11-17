@@ -12,18 +12,18 @@ import Map;
 import util::Math;
 import util::Benchmark;
 
+import Metric;
 import Rank;
+
 import metrics::helpers::Model;
 import metrics::helpers::Code;
 
-public Rank rank(M3 model, bool verbose = true) {
-	<cloneLines, linesOfCode> = findClones(6, model, verbose = verbose);
-	return rank(cloneLines, linesOfCode);
+public tuple[Rank,Metric] rank(M3 model) {
+	ratio = findClones(6, model);
+	return <rank(ratio), ratio>;
 }
 
-public Rank rank(int cloneLines, int totalLines) {
-	duplicationPercentage = cloneLines * 1.0 / totalLines;
-	
+public Rank rank(DuplicationRatio(duplicationPercentage)) {
 	if (duplicationPercentage < .03)
 		return Excellent();
 	if (duplicationPercentage < .05)
@@ -35,19 +35,12 @@ public Rank rank(int cloneLines, int totalLines) {
 	return Dismal();
 }
 
-public tuple[int,int] findClones(
-	int threshold, M3 model, bool verbose = true
+public Metric findClones(
+	int threshold, M3 model
 ) {
-	\start = realTime()*1.0;
-
 	<blocks, linesOfCode> = splitInBlocksOf(classes(model), threshold);
 	clones = clonedLines(blocks, threshold);
-	
-	end = realTime()*1.0;
-	seconds = (end - \start) / 1000;
-	if (verbose) println("runtime: <seconds>s");
-	
-	return <size(clones), linesOfCode>; 
+	return DuplicationRatio(size(clones) * 1.0 / linesOfCode);
 }
 
 

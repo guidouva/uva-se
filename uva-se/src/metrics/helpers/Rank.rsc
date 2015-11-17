@@ -1,17 +1,27 @@
 module metrics::helpers::Rank
 
-import Rank;
 import util::Math;
 
-public Rank rankUnits(int moderateThreshold, int highThreshold, int veryHighThreshold,
-					  list[tuple[int,int]] unitDataAndLOC) {
-	return rankProfile(riskProfile(moderateThreshold, highThreshold, veryHighThreshold, unitDataAndLOC));
+import Metric;
+import Rank;
+
+
+public tuple[Rank,Metric] rankUnits(
+	int moderateThreshold, int highThreshold, int veryHighThreshold,
+	list[tuple[int,int]] unitDataAndLOC
+) {
+	profile = riskProfile(moderateThreshold, highThreshold, veryHighThreshold, unitDataAndLOC);
+	return <rank(profile), profile>;
 }
 
-public tuple[real, real, real] riskProfile(int moderateThreshold, int highThreshold, int veryHighThreshold,
-					  list[tuple[int,int]] unitDataAndLOC) {
+public Metric riskProfile(
+	int moderateThreshold, int highThreshold, int veryHighThreshold,
+  	list[tuple[int,int]] unitDataAndLOC
+) {
 					  
 	nLinesInMethods 	= (0 | it + linesOfCode | <_, linesOfCode> <- unitDataAndLOC);
+	nLinesInLow         = (0 | it + linesOfCode |
+							<\data, linesOfCode> <- unitDataAndLOC, \data <= moderateThreshold);
 	nLinesInModerate 	= (0 | it + linesOfCode | 
 							<\data, linesOfCode> <- unitDataAndLOC, \data > moderateThreshold, \data <= highThreshold);
 	nLinesInHigh 		= (0 | it + linesOfCode |
@@ -19,16 +29,15 @@ public tuple[real, real, real] riskProfile(int moderateThreshold, int highThresh
 	nLinesInVeryHigh 	= (0 | it + linesOfCode |
 							<\data, linesOfCode> <- unitDataAndLOC, \data > veryHighThreshold);
 	
+	real lowPercentage      = (nLinesInLow * 1.0) / nLinesInMethods;
 	real moderatePercentage = (nLinesInModerate * 1.0) / nLinesInMethods;
 	real highPercentage 	= (nLinesInHigh * 1.0) / nLinesInMethods;
 	real veryHighPercentage = (nLinesInVeryHigh * 1.0) / nLinesInMethods;
 	
-	return <moderatePercentage, highPercentage, veryHighPercentage>;				  
+	return RiskProfile(lowPercentage, moderatePercentage, highPercentage, veryHighPercentage);
 }	
 	
-public Rank rankProfile(tuple[real, real, real] profile) {
-	<moderatePercentage, highPercentage, veryHighPercentage> = profile;
-	
+public Rank rank(RiskProfile(_, moderatePercentage, highPercentage, veryHighPercentage)) {
 	if (moderatePercentage < 0.25 && ceil(highPercentage) == 0 && ceil(veryHighPercentage) == 0)
 		return Excellent();
 	if (moderatePercentage < 0.30 && highPercentage < 0.05 && ceil(veryHighPercentage) == 0)

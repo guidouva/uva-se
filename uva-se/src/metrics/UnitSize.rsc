@@ -6,15 +6,16 @@ import lang::java::m3::Core;
 import lang::java::jdt::m3::Core;
 import lang::java::jdt::m3::AST;
 
+import Metric;
 import Rank;
 
 import metrics::helpers::Code;
 import metrics::helpers::Model;
 import metrics::helpers::Rank;
 
-public Rank rank(M3 model) = rank(sizePerMethod(model));
+public tuple[Rank,Metric] rank(M3 model) = rank(sizePerMethod(model));
 
-public Rank rank(list[tuple[int,int]] unitSizesAndLOC) = 
+public tuple[Rank,Metric] rank(list[tuple[int,int]] unitSizesAndLOC) = 
 	rankUnits(20, 50, 100, unitSizesAndLOC);
 
 public list[tuple[int,int]] sizePerMethod(M3 model) {
@@ -28,4 +29,4 @@ private list[tuple[int,int]] sizePerUnit(list[Declaration] asts) =
 	
 private M3 modelTest = createM3FromEclipseProject(|project://volume-test|);
 	
-test bool testRank() = rank(modelTest) == Excellent();
+test bool testRank() = rank(modelTest) == <Excellent(), RiskProfile(1.0,0.0,0.0,0.0)>;
