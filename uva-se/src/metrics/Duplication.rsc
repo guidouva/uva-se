@@ -87,22 +87,14 @@ private tuple[map[list[str], list[tuple[loc, int]]], int] splitInBlocksOf(set[lo
 	map[list[str], list[tuple[loc, int]]] blocks = ();
 	
 	list[loc] filesList = [file | file <- files];
-	
-	str sep = "\n===== FILE ENDER LINE =====\n";
-
 	list[str] contentsList = [ readFile(file) | file <- filesList ];
-	//println(size(contentsList));
 
-	str allLines = intercalate("/**/"+sep, contentsList);
-	//writeFile(|file:///home/guido/before.txt|, allLines);
-	allLines = removeComments(allLines);
+	str sep = "\n===== FILE ENDER LINE =====\n";
+	str allLines = removeComments(intercalate("/**/"+sep, contentsList));
 
 	list[str] fileTexts = split(sep, allLines);
-	//println(size(fileTexts));
-	//writeFile(|file:///home/guido/after.txt|, intercalate("\n",fileTexts));
-	
 	//list[str] filesTexts = [removeComments(readFile(file)) | file <- filesList];
-	//writeFile(|file:///home/guido/good.txt|, intercalate("\n",filesTexts));
+
 	int fileId = 0;
 	
 	for (str fileText <- fileTexts) {
