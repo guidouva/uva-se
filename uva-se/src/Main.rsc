@@ -13,7 +13,7 @@ import QualityCharacteristic;
 import SourceProperty;
 
 
-public void printMaintabilityReport(M3 model) {
+public void printMaintainabilityReport(M3 model) {
 	println(toString(rank({Maintainability(), Analysability(), Changeability(), Testability()}, model)));
 }
 
