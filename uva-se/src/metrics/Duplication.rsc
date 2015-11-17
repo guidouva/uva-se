@@ -93,11 +93,19 @@ private tuple[map[list[str], list[tuple[loc, int]]], int] splitInBlocksOf(set[lo
 	int linesOfCode = 0;
 	map[list[str], list[tuple[loc, int]]] blocks = ();
 	
-	for (loc file <- files) {
-		str text = readFile(file);
-		
-		list[str] lines = [trim(line) | line <- split("\n", removeComments(text))
+	list[loc] filesList = [file | file <- files];
+	
+	str allLines = intercalate("\n===== FILE ENDER LINE =====\n", [ readFile(file) | file <- filesList ]);
+	allLines = removeComments(allLines);
+	list[str] fileTexts = split("\n===== FILE ENDER LINE =====\n", allLines);
+	
+	//list[str] filesTexts = ([] | it + removeComments(readFile(file)) | file <- files);
+	int fileId = 0;
+	
+	for (str fileText <- fileTexts) {
+		list[str] lines = [trim(line) | line <- split("\n", fileText)
 					  			, !isEmpty(trim(line)) ];
+		loc file = filesList[fileId];
 		
 		linesOfCode += size(lines);
 		
@@ -111,6 +119,8 @@ private tuple[map[list[str], list[tuple[loc, int]]], int] splitInBlocksOf(set[lo
 				}
 			}
 		}
+		
+		fileId += 1;
 	}
 	
 	return <blocks, linesOfCode>;
