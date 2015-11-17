@@ -1,7 +1,10 @@
 module Main
 
+import IO;
 import List;
 import Set;
+import String;
+
 import lang::java::m3::Core;
 
 import Metric;
@@ -9,6 +12,10 @@ import Rank;
 import QualityCharacteristic;
 import SourceProperty;
 
+
+public void printMaintabilityReport(M3 model) {
+	println(toString(rank({Maintainability(), Analysability(), Changeability(), Testability()}, model)));
+}
 
 public tuple[map[SourceProperty, tuple[Rank,Metric]], map[QualityCharacteristic, Rank]] rank(
 	set[QualityCharacteristic] qualityCharacteristics,
@@ -34,12 +41,12 @@ public map[SourceProperty, tuple[Rank,Metric]] rank(set[SourceProperty] properti
 	= (property : rank(property, model) | property <- properties);
 	
 public str toString(map[SourceProperty, tuple[Rank,Metric]] result) {
-	lines = sort([ "<toString(property)>\n<toString(result[property])>" | property <- result ]);
+	lines = sort([ "<toUpperCase(toString(property))>\n<toString(result[property])>" | property <- result ]);
 	return intercalate("\n\n", lines);
 }
 
 public str toString(map[QualityCharacteristic, Rank] result) {
-	lines = sort([ "<toString(characteristic)>\n<toString(result[characteristic])>" | characteristic <- result ]);
+	lines = sort([ "<toUpperCase(toString(characteristic))>\n<toString(result[characteristic])>" | characteristic <- result ]);
 	return intercalate("\n\n", lines);
 }
 

@@ -26,6 +26,7 @@ public str toString(UnitSize()) = "unit size";
 public tuple[Rank,Metric] rank(Volume(), M3 model) = metrics::Volume::rank(model);
 public tuple[Rank,Metric] rank(UnitComplexity(), M3 model) = metrics::CyclomaticComplexity::rank(model);
 public tuple[Rank,Metric] rank(UnitSize(), M3 model) = metrics::UnitSize::rank(model);
+public tuple[Rank,Metric] rank(Duplication(), M3 model) = metrics::Duplication::rank(model);
 
 public str toString(tuple[Rank,Metric] result)
 	= "<toString(result[0])>\n<toString(result[1])>";
