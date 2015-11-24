@@ -83,18 +83,24 @@ private set[tuple[loc, int]] clonedLines(map[list[str], list[tuple[loc, int]]] b
 // Returns a map with the location (file + linenumber) of each block
 // and the number of lines over all the files. 
 private tuple[map[list[str], list[tuple[loc, int]]], int] splitInBlocksOf(set[loc] files, int blockSize) {
+	list[loc] filesList = [file | file <- files];
+	
+	list[str] contentsList = [ readFile(file) | file <- filesList ];
+	str sep = "\n===== FILE ENDER LINE =====\n";
+	str allLines = intercalate("/**/"+sep, contentsList);
+	list[str] fileTexts = split(sep, allLines);
+	
+	return splitInBlocksOf(fileTexts, filesList, blockSize);
+}
+
+// Splits the sup9plied files in blocks (list of str) of blocksize.
+// Returns a map with the location (file + linenumber) of each block
+// and the number of lines over all the files. 
+private tuple[map[list[str], list[tuple[loc, int]]], int] splitInBlocksOf(list[str] fileTexts, list[loc] filesList, int blockSize) {
+//list[str] fileTexts = [removeComments(readFile(file)) | file <- filesList];
 	int linesOfCode = 0;
 	map[list[str], list[tuple[loc, int]]] blocks = ();
 	
-	list[loc] filesList = [file | file <- files];
-	list[str] contentsList = [ readFile(file) | file <- filesList ];
-
-	str sep = "\n===== FILE ENDER LINE =====\n";
-	str allLines = removeComments(intercalate("/**/"+sep, contentsList));
-
-	list[str] fileTexts = split(sep, allLines);
-	//list[str] filesTexts = [removeComments(readFile(file)) | file <- filesList];
-
 	int fileId = 0;
 	
 	for (str fileText <- fileTexts) {
@@ -139,4 +145,7 @@ test bool testFindClones() {
 	return numberOfClones == 46;
 }
 
-test bool testRank() = rank(modelTest, verbose=false) == Dismal();
+test bool testRank() { 
+	<m, _> = rank(modelTest, verbose=false);
+ 	return m == Dismal();
+}
