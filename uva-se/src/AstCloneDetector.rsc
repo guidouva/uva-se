@@ -11,6 +11,8 @@ import Set;
 
 import metrics::Duplication;
 
+anno loc Type @ src;
+
 public void findClones(loc project) {
 	set[Declaration] asts = createAstsFromEclipseProject(project, false);
 	
@@ -32,24 +34,22 @@ public void findClones(loc project) {
 	println(size(cloneTokens));
 }
 
-public node fixSrcs(node ast) {
+public node fixSrcs(Declaration ast) {
 	loc lastSrc = ast@src;
-
+	
 	return top-down visit(ast) {
 		case v:variables(_, _): {
-			v@src ? v[0]@src;
+			list[loc] srcs = [];
+			for (variable < v) {
+				srcs += variable@src;	
+			}
+			v@src = totalCoverage(srcs);
 		}
-		case e:\infix(_, operator, _): {
-			e@src ? lastSrc;
+		case Type e: {
+			e@src = lastSrc;
 		}
-		case e:\postfix(_, operator): {
-			e@src ? lastSrc;
-		}
-		case e:\prefix(operator, _): {
-			e@src ? lastSrc;
-		}
-		case remainder: {
-			lastSrc = remainder@src;
+		case Declaration e: {
+			lastSrc = e@src;
 		}
 	};
 }
