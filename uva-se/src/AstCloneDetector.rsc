@@ -172,3 +172,21 @@ private set[tuple[int, int]] clonedLines(map[list[str], list[tuple[int, int]]] b
 
 	return clones;
 }
+
+public loc totalCoverage(list[loc] locs) {
+	total = locs[0];
+	last = locs[size(locs)-1];
+	total.end.line = last.end.line;
+	total.end.column = last.end.column;
+	return total;
+}
+
+public list[tuple[str,loc]] fixLocationBoundaries(list[tuple[str,loc]] tokens) {
+	newtokens = [];
+	for(i <- [0..size(tokens)-1]) {
+		newtokens[i] = <tokens[i][0], tokens[i][1]>;	
+		newtokens[i][1].end.line = newtokens[i+1][1].begin.line;
+		newtokens[i][1].end.column = newtokens[i+1][1].begin.column;
+	}
+	return newtokens;
+}
