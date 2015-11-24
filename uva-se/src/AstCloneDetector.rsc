@@ -21,8 +21,37 @@ public void findClones(loc project) {
 		println({token | <token, l> <- tokenize(ast), l == |file://NOTHING|});
 	}
 	
-	set[tuple[int, int]] clones = clonedLines(splitInBlocksOf(tokens, 60), 60);
-	println(size(clones));
+	blocks = splitInBlocksOf(tokens, 60);
+	set[list[tuple[int, int]]] cloneBlocks = clonedBlocks(blocks, 60);
+	set[tuple[int, int]] cloneTokens = clonedLines(blocks, 60);
+	
+	for (<fId, tokenNumber> <- sort([c | c <- cloneTokens])) {
+		;//println(tokens[fId][tokenNumber]);
+	}
+	
+	println(size(cloneTokens));
+}
+
+public node fixSrcs(node ast) {
+	loc lastSrc = ast@src;
+
+	return top-down visit(ast) {
+		case v:variables(_, _): {
+			v@src ? v[0]@src;
+		}
+		case e:\infix(_, operator, _): {
+			e@src ? lastSrc;
+		}
+		case e:\postfix(_, operator): {
+			e@src ? lastSrc;
+		}
+		case e:\prefix(operator, _): {
+			e@src ? lastSrc;
+		}
+		case remainder: {
+			lastSrc = remainder@src;
+		}
+	};
 }
 
 public list[tuple[str, loc]] tokenize(node ast) {
@@ -34,6 +63,12 @@ public list[tuple[str, loc]] tokenize(node ast) {
 			;
 		}
 		case \compilationUnit(_, _, _): {
+			;
+		}
+		case \package(_): {
+			;
+		}
+		case \package(_, _): {
 			;
 		}
 		case \import(_): {
