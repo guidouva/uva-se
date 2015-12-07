@@ -37,16 +37,20 @@ public void findClones(loc project) {
 public node fixSrcs(Declaration ast) {
 	loc lastSrc = ast@src;
 	
-	return top-down visit(ast) {
+	return bottom-up visit(ast) {
 		case v:variables(_, _): {
 			list[loc] srcs = [];
-			for (variable < v) {
+			for (variable <- v) {
+				println(variable);
 				srcs += variable@src;	
 			}
 			v@src = totalCoverage(srcs);
 		}
 		case Type e: {
-			e@src = lastSrc;
+		
+			println(e);
+			e@src ? lastSrc;
+			println(e);
 		}
 		case Declaration e: {
 			lastSrc = e@src;
