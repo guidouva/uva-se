@@ -192,7 +192,7 @@ public loc totalCoverage(list[loc] locs) {
 	return total;
 }
 
-public list[tuple[str,loc]] fixLocationBoundaries(list[tuple[str,loc]] tokens) {
+public list[tuple[token_t,loc]] fixLocationBoundaries(list[tuple[token_t,loc]] tokens) {
 	newtokens = [];
 	for(i <- [0..size(tokens)-1]) {
 		newtokens[i] = <tokens[i][0], tokens[i][1]>;	
