@@ -152,7 +152,7 @@ private map[block_t, list[tokenlocation_t]] splitInBlocksOf(list[list[token_t]] 
 private rel[tokenlocation_t,tokenlocation_t] clonedBlocks(map[block_t, list[tokenlocation_t]] blocks, int blockSize) {
 	rel[tokenlocation_t,tokenlocation_t] clones = {};
 	
-	for (list[str] block <- blocks) {
+	for (block <- blocks) {
 		locations = blocks[block];
 		
 		if (size(locations) > 1) {
