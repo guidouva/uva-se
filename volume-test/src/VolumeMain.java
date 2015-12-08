@@ -9,7 +9,11 @@ public class VolumeMain {
 	 * 
 	 * Lorem ipsum
 	 */
-
+	
+	public VolumeMain(String bla) {
+		Integer.parseInt("123");
+	}
+	
 	public static void main(String[] args) {
 		/* lalal multiline
 		 * 

@@ -4,167 +4,138 @@ import lang::java::m3::Core;
 import lang::java::jdt::m3::Core;
 import lang::java::jdt::m3::AST;
 
+import util::Math;
 import Node;
 import IO;
 import List;
 import Set;
+import Map;
+import Relation;
 
 import metrics::Duplication;
 
 anno loc Type @ src;
 
+alias fid_t = int;
+alias tokenindex_t = int;
+alias token_t = str;
+alias tokenlocation_t = tuple[fid_t,tokenindex_t];
+alias block_t = list[token_t];
+
 public void findClones(loc project) {
+	int blockSize = 8;
 	set[Declaration] asts = createAstsFromEclipseProject(project, false);
 	
-	list[list[tuple[str, loc]]] tokensAndLocations = [];
 	list[loc] files = [];
-	
+	list[list[tuple[token_t, loc]]] tokensAndLocations = [];
 	for (ast <- asts) {
 		files += ast@src;
 		tokensAndLocations += [tokenize(ast)];
-		//println({token | <token, l> <- tokenize(ast), l == |file:///unknown|});
 	}
+	list[list[token_t]] tokens = [[t | <t, _> <- tokenList] | tokenList <- tokensAndLocations];
 	
-	list[list[str]] tokens = [[t | <t, _> <- tokenList] | tokenList <- tokensAndLocations];
+	map[block_t, list[tokenlocation_t]] blocks = splitInBlocksOf(tokens, blockSize);
+	rel[tokenlocation_t, tokenlocation_t] cloneBlocks = clonedBlocks(blocks, blockSize);
+	set[tokenlocation_t] cloneTokens = clonedLines(blocks, blockSize);
 		
-	map[list[str], list[tuple[int, int]]] blocks = splitInBlocksOf(tokens, 60);
-	set[tuple[tuple[int,int], tuple[int,int], int]] expandedClonedBlocks = expandClonedBlocks(blocks, 60);
+	set[tuple[tokenlocation_t, tokenlocation_t, int]] expandedClonedBlocks = expandClonedBlocks(blocks, blockSize);
 	
-	for (expandedClonedBlock <- expandedClonedBlocks) {
-		<<fId1, tokenNumber1>, <fId2, tokenNumber2>, cloneSize> = expandedClonedBlock;
+	for (expandedClonedBlock:<<fId1, tokenNumber1>, <fId2, tokenNumber2>, cloneSize> <- expandedClonedBlocks) {
 		clone1Loc1 = tokensAndLocations[fId1][tokenNumber1][1];
-		println(size(tokensAndLocations[fId1]));
-		clone1Loc2 = tokensAndLocations[fId1][tokenNumber1 + cloneSize - 2][1];
-		
+		clone1Loc2 = tokensAndLocations[fId1][tokenNumber1 + cloneSize - 1][1];
 		clone2Loc1 = tokensAndLocations[fId2][tokenNumber2][1];
-		println(size(tokensAndLocations[fId2]));
-		println(tokenNumber2);
-		println(cloneSize);
-		clone2Loc2 = tokensAndLocations[fId2][tokenNumber2 + cloneSize - 2][1];
+		clone2Loc2 = tokensAndLocations[fId2][tokenNumber2 + cloneSize - 1][1];
 		
+		// TODO, fix location length. Read file manually?
 		loc1 = totalCoverage([clone1Loc1, clone1Loc2]);
 		loc2 = totalCoverage([clone2Loc1, clone2Loc2]);
-		//println(<fId1, tokenNumber1>);
-		println(clone1Loc1);
-		println(clone1Loc2);
-		//println(<fId2, tokenNumber2>);
-		println(clone2Loc1);
-		println(clone2Loc2);
-		//println(loc1);
-		//println(loc2);
-		//println(readFile(loc1));
-		//println(readFile(loc2));
+		
+		println("clone1");
+		println("<tokens[fId1][tokenNumber1]> <clone1Loc1>");
+		println("<tokens[fId1][tokenNumber1]> <clone1Loc2>");
+		
+		println("clone2");
+		println("<tokens[fId2][tokenNumber2]> <clone2Loc1>");
+		println("<tokens[fId2][tokenNumber2]> <clone2Loc2>");
+		println();
 	}
-	
-	set[list[tuple[int, int]]] cloneBlocks = clonedBlocks(blocks, 60);
-	set[tuple[int, int]] cloneTokens = clonedLines(blocks, 60);
-	
-	for (<fId, tokenNumber> <- sort([c | c <- cloneTokens])) {
-		//println("<tokensAndLocations[fId][tokenNumber][0]> <files[fId]> <tokensAndLocations[fId][tokenNumber][1]>");
-		;//println(tokens[fId][tokenNumber]);
-	}
-	
-	println(size(cloneTokens));
+		
+	println("Number of cloned tokens <size(cloneTokens)>.");
 }
 
-public set[tuple[tuple[int,int], tuple[int,int], int]] expandClonedBlocks(blocks, blockSize) {
-	set[list[tuple[int, int]]] cloneBlocks = clonedBlocks(blocks, blockSize);
+public set[tuple[tokenlocation_t, tokenlocation_t, int]] expandClonedBlocks(blocks, blockSize) {
+	rel[tokenlocation_t,tokenlocation_t] cloneBlocks = clonedBlocks(blocks, blockSize);
+	set[tuple[tokenlocation_t, tokenlocation_t, int]] expandedClonedBlocks = {};
 	
-	map[tuple[int, int], set[tuple[int, int]]] cloneBlockRelations = ();
-	for (list[tuple[int, int]] cloneBlock <- cloneBlocks) {
-		for (i <- [0 .. size(cloneBlock)]) {
-			cloneBlockRelations[cloneBlock[i]] = {clone | clone <- cloneBlock[..i] + cloneBlock[i + 1..]};
+	// expand blocks downwards
+	for (<clone1, clone2> <- cloneBlocks) {
+		previousClone1 = <clone1[0], clone1[1] - 1>;
+		previousClone2 = <clone2[0], clone2[1] - 1>;
+		
+		// can skip if clone can be expanded upwards
+		if (<previousClone1, previousClone2> in cloneBlocks) {
+			continue;
 		}
+		
+		int cloneSize = blockSize;
+		tokenlocation_t nextClone1 = <clone1[0], clone1[1] + 1>;
+		tokenlocation_t nextClone2 = <clone2[0], clone2[1] + 1>;
+		
+		while (<nextClone1, nextClone2> in cloneBlocks) {
+			cloneSize += 1;
+			nextClone1 = <nextClone1[0], nextClone1[1] + 1>;
+			nextClone2 = <nextClone2[0], nextClone2[1] + 1>;
+		}
+		expandedClonedBlocks += <clone1, clone2, cloneSize>;
 	}
 	
-	set[tuple[tuple[int,int], tuple[int,int], int]] expandedClonedBlocks = {};
+	// filter nested clones
+	map[fid_t, map[fid_t, list[tuple[tokenlocation_t, tokenlocation_t, int]]]] cache = ();
 	
-	for (tuple[int, int] clone <- cloneBlockRelations) {
-		set[tuple[int, int]] otherClones = {};
-		set[tuple[int, int]] potentialOtherClones = cloneBlockRelations[clone];
-		
-		for (tuple[int, int] otherClone <- potentialOtherClones) {
-			tuple[int, int] previousOtherClone = <otherClone[0], otherClone[1] - 1>;
-			
-			if (!(previousOtherClone in cloneBlockRelations)) {
-				otherClones += otherClone;
-				continue;
-			}
-			
-			if (!(clone in cloneBlockRelations[previousOtherClone])) {
-				otherClones += otherClone;
-				continue;
-			}
-		}
-		
-		if (size(otherClones) > 0) {
-			int cloneSize = blockSize;
-			tuple[int, int] nextClone = <clone[0], clone[1]>;
-			set[tuple[int, int]] nextOtherClones = otherClones;
-			set[tuple[int, int]] potentialNextOtherClones = nextOtherClones;
-		
-			while (size(nextOtherClones) > 0) {
-				cloneSize += 1;
-				nextClone = <nextClone[0], nextClone[1] + 1>;
-				potentialNextOtherClones = {<oc[0], oc[1] + 1> | oc <- nextOtherClones};
-				nextOtherClones = {};
+	for (clonepair:<clone1, clone2, cloneSize> <- expandedClonedBlocks)  {
+		cache[clone1[0]] = ();
+		cache[clone1[0]][clone2[0]] = [];
+	}
+	
+	for (clonepair:<clone1, clone2, cloneSize> <- expandedClonedBlocks)  {
+		cache[clone1[0]][clone2[0]] += clonepair;
+	}
+	
+	set[tuple[tokenlocation_t, tokenlocation_t, int]] result = {};
+	
+	for (fid_t fid1 <- cache) {
+		for (fid_t fid2 <- cache[fid1]) {
+			clonepairs = cache[fid1][fid2];
+			for (clonepair:<clone1, clone2, cloneSize> <- clonepairs) {
+				bool isBiggestBlock = true;
 				
-				for (tuple[int, int] nextOtherClone <- potentialNextOtherClones) {
-					if (nextOtherClone in cloneBlockRelations && nextClone in cloneBlockRelations[nextOtherClone]) {
-						nextOtherClones += nextOtherClone;
+				for (otherClonepair:<otherClone1, otherClone2, otherCloneSize> <- cache[fid1][fid2]) {
+					if (otherClonepair == clonepair) {
+						continue;
+					}
+					
+					if (clone1[1] >= otherClone1[1] &&
+						clone1[1] + cloneSize - 1 <= otherClone1[1] + otherCloneSize - 1 &&
+						clone2[1] >= otherClone2[1] &&
+						clone2[1] + cloneSize - 1 <= otherClone2[1] + otherCloneSize - 1
+						) {
+							isBiggestBlock = false;
+							break;
 					}
 				}
-			}
-			
-			cloneSize -= 1;
-			nextOtherClones = potentialNextOtherClones;
-			
-			for (nextOtherClone <- nextOtherClones) {
-				expandedClonedBlocks += <clone, <nextOtherClone[0], nextOtherClone[1] - (cloneSize - blockSize)>, cloneSize>;
-			}
+				if (isBiggestBlock) {
+					result += clonepair;
+				}
+			}		
 		}
 	}
 	
-	return expandedClonedBlocks;
+	return result;
 }
 
-public Declaration fixSrcs(Declaration ast) {
-	loc lastSrc = ast@src;
-	
-	return top-down visit(ast) {
-		case v:variables(_, _): {
-			list[loc] srcs = [];
-			for (Type variable <- v) {
-				if (!("src" in getAnnotations(variable))) {
-					variable@src = lastSrc;
-				}
-				srcs += variable@src;	
-			}
-			v@src = totalCoverage(srcs);
-		}
-		case Type e: {
-			if (!("src" in getAnnotations(e))) {
-				e@src = lastSrc;
-			}	
-		}
-		case Declaration e: {
-			lastSrc = e@src;
-		}
-		case Expression e: {
-			lastSrc = e@src;
-		}
-		case Statement e: {
-			lastSrc = e@src;
-		}
-		case Modifier e: {
-			lastSrc = e@src;
-		}
-	};
-}
-
-public list[tuple[str, loc]] tokenize(node ast) {
+public list[tuple[token_t, loc]] tokenize(node ast) {
 	//model = createM3FromEclipseProject(|project://volume-test|);
-	list[tuple[str, loc]] tokens = [];
+	list[tuple[token_t, loc]] tokens = [];
 	
 	top-down visit(ast) {
 		case \compilationUnit(_, _): {
@@ -223,18 +194,19 @@ public list[tuple[str, loc]] tokenize(node ast) {
 // Splits the sup9plied files in blocks (list of str) of blocksize.
 // Returns a map with the location (file + linenumber) of each block
 // and the number of lines over all the files. 
-private map[list[str], list[tuple[int, int]]] splitInBlocksOf(list[list[str]] tokensList, int blockSize) {
-	map[list[str], list[tuple[int, int]]] blocks = ();
+private map[block_t, list[tokenlocation_t]] splitInBlocksOf(list[list[token_t]] tokensList, int blockSize) {
+	map[block_t, list[tokenlocation_t]] blocks = ();
 	
 	for (i <- [0 .. size(tokensList)]) {
-		list[str] tokens = tokensList[i];
+		list[token_t] tokens = tokensList[i];
 		
 		if (size(tokens) < blockSize) {
 			continue;
 		}
-		
+				
 		for (j <- [0 .. size(tokens) - (blockSize - 1)]) {
-			list[str] block = tokens[j .. j + blockSize];
+		
+			block_t block = tokens[j .. j + blockSize];
 			if (block notin blocks) {
 				blocks[block] = [<i, j>];
 			} else {
@@ -242,40 +214,38 @@ private map[list[str], list[tuple[int, int]]] splitInBlocksOf(list[list[str]] to
 			}
 		}
 	}
-	
 	return blocks;
 }
 
-private set[list[tuple[int, int]]] clonedBlocks(map[list[str], list[tuple[int, int]]] blocks, int blockSize) {
-	set[list[tuple[int, int]]] clones = {};
+private rel[tokenlocation_t,tokenlocation_t] clonedBlocks(map[block_t, list[tokenlocation_t]] blocks, int blockSize) {
+	rel[tokenlocation_t,tokenlocation_t] clones = {};
 	
-	for (list[str] block <- blocks) {
-		list[tuple[int, int]] locations = blocks[block];
+	for (block <- blocks) {
+		locations = blocks[block];
 		
 		if (size(locations) > 1) {
-			list[int] tokenNumbers = [tokenNumber | <_, tokenNumber> <- locations];
+			tokenNumbers = [tokenNumber | <_, tokenNumber> <- locations];
 			
 			if (size({fId | <fId, _> <- locations}) == 1) {
+				println("here <tokenNumbers>");
 				if (max(tokenNumbers) - min(tokenNumbers) < blockSize) {
 					continue;
 				}
 			}
 				
-			clones += ([] | it + t | t <- locations);
+			clones += { <l1,l2> | l1 <- locations, l2 <- locations, l1[0] != l2[0] || abs(l1[1] - l2[1]) >= blockSize };
 		}
 	}
 	
 	return clones;
 }
 
-private set[tuple[int, int]] clonedLines(map[list[str], list[tuple[int, int]]] blocks, int blockSize) {
-	set[tuple[int, int]] clones = {};
+private set[tokenlocation_t] clonedLines(map[block_t, list[tokenlocation_t]] blocks, int blockSize) {
+	set[tokenlocation_t] clones = {};
 	
-	for (clonedBs <- clonedBlocks(blocks, blockSize)) {
-		for (block <- clonedBs) {
-			<fileId, tokenNumber> = block;
-			clones = (clones | it + <fileId, l> | l <- [tokenNumber .. tokenNumber + blockSize]);
-		}
+	for (tuple[tokenlocation_t, tokenlocation_t] clonedBs <- clonedBlocks(blocks, blockSize)) {
+		<fileId, tokenNumber> = clonedBs[0];
+		clones = (clones | it + <fileId, l> | l <- [tokenNumber .. tokenNumber + blockSize]);
 	}
 
 	return clones;
@@ -290,7 +260,7 @@ public loc totalCoverage(list[loc] locs) {
 	return total;
 }
 
-public list[tuple[str,loc]] fixLocationBoundaries(list[tuple[str,loc]] tokens) {
+public list[tuple[token_t,loc]] fixLocationBoundaries(list[tuple[token_t,loc]] tokens) {
 	newtokens = [];
 	for(i <- [0..size(tokens)-1]) {
 		newtokens[i] = <tokens[i][0], tokens[i][1]>;	

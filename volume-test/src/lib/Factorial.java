@@ -1,9 +1,20 @@
 package lib;
 
+
+@interface Foo {
+	String bar();
+	int currentRevision() default 1;
+}
+
+
 /* Calculate the factorial
  * 
  * Functions: calculate
  */
+@Foo (
+		bar = "someone",
+		currentRevision = 3
+)
 public class Factorial {
 	
 	// ignore this line
