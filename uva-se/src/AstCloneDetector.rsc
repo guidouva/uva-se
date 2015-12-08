@@ -47,8 +47,8 @@ public void findClones(loc project) {
 		clone2Loc2 = tokensAndLocations[fId2][tokenNumber2 + cloneSize - 1][1];
 		
 		// TODO, fix location length. Read file manually?
-		loc1 = totalCoverage([clone1Loc1, clone1Loc2]);
-		loc2 = totalCoverage([clone2Loc1, clone2Loc2]);
+		//loc1 = totalCoverage([clone1Loc1, clone1Loc2]);
+		//loc2 = totalCoverage([clone2Loc1, clone2Loc2]);
 		
 		println("clone1");
 		println("<tokens[fId1][tokenNumber1]> <clone1Loc1>");
@@ -81,7 +81,7 @@ public set[tuple[tokenlocation_t, tokenlocation_t, int]] expandClonedBlocks(bloc
 		tokenlocation_t nextClone1 = <clone1[0], clone1[1] + 1>;
 		tokenlocation_t nextClone2 = <clone2[0], clone2[1] + 1>;
 		
-		while (<nextClone1, nextClone2> in cloneBlocks) {
+		while (<nextClone1, nextClone2> in cloneBlocks && nextClone1 != clone2 && nextClone2 != clone1) {
 			cloneSize += 1;
 			nextClone1 = <nextClone1[0], nextClone1[1] + 1>;
 			nextClone2 = <nextClone2[0], nextClone2[1] + 1>;
@@ -90,44 +90,43 @@ public set[tuple[tokenlocation_t, tokenlocation_t, int]] expandClonedBlocks(bloc
 	}
 	
 	// filter nested clones
-	map[fid_t, map[fid_t, list[tuple[tokenlocation_t, tokenlocation_t, int]]]] cache = ();
+	map[tuple[fid_t, fid_t], list[tuple[tokenlocation_t, tokenlocation_t, int]]] cache = ();
 	
+	println(expandedClonedBlocks);
 	for (clonepair:<clone1, clone2, cloneSize> <- expandedClonedBlocks)  {
-		cache[clone1[0]] = ();
-		cache[clone1[0]][clone2[0]] = [];
+		cache[<clone1[0], clone2[0]>] = [];
 	}
-	
+	println(cache);
 	for (clonepair:<clone1, clone2, cloneSize> <- expandedClonedBlocks)  {
-		cache[clone1[0]][clone2[0]] += clonepair;
+		println("<clone1[0]>, <clone2[0]>");
+		cache[<clone1[0], clone2[0]>] += clonepair;
 	}
 	
 	set[tuple[tokenlocation_t, tokenlocation_t, int]] result = {};
 	
-	for (fid_t fid1 <- cache) {
-		for (fid_t fid2 <- cache[fid1]) {
-			clonepairs = cache[fid1][fid2];
-			for (clonepair:<clone1, clone2, cloneSize> <- clonepairs) {
-				bool isBiggestBlock = true;
+	for (filepair:<fid1, fid2> <- cache) {
+		clonepairs = cache[filepair];
+		for (clonepair:<clone1, clone2, cloneSize> <- clonepairs) {
+			bool isBiggestBlock = true;
+			
+			for (otherClonepair:<otherClone1, otherClone2, otherCloneSize> <- clonepairs) {
+				if (otherClonepair == clonepair) {
+					continue;
+				}
 				
-				for (otherClonepair:<otherClone1, otherClone2, otherCloneSize> <- cache[fid1][fid2]) {
-					if (otherClonepair == clonepair) {
-						continue;
-					}
-					
-					if (clone1[1] >= otherClone1[1] &&
-						clone1[1] + cloneSize - 1 <= otherClone1[1] + otherCloneSize - 1 &&
-						clone2[1] >= otherClone2[1] &&
-						clone2[1] + cloneSize - 1 <= otherClone2[1] + otherCloneSize - 1
-						) {
-							isBiggestBlock = false;
-							break;
-					}
+				if (clone1[1] >= otherClone1[1] &&
+					clone1[1] + cloneSize - 1 <= otherClone1[1] + otherCloneSize - 1 &&
+					clone2[1] >= otherClone2[1] &&
+					clone2[1] + cloneSize - 1 <= otherClone2[1] + otherCloneSize - 1
+					) {
+						isBiggestBlock = false;
+						break;
 				}
-				if (isBiggestBlock) {
-					result += clonepair;
-				}
-			}		
-		}
+			}
+			if (isBiggestBlock) {
+				result += clonepair;
+			}
+		}			
 	}
 	
 	return result;
@@ -205,7 +204,6 @@ private map[block_t, list[tokenlocation_t]] splitInBlocksOf(list[list[token_t]] 
 		}
 				
 		for (j <- [0 .. size(tokens) - (blockSize - 1)]) {
-		
 			block_t block = tokens[j .. j + blockSize];
 			if (block notin blocks) {
 				blocks[block] = [<i, j>];
@@ -227,7 +225,6 @@ private rel[tokenlocation_t,tokenlocation_t] clonedBlocks(map[block_t, list[toke
 			tokenNumbers = [tokenNumber | <_, tokenNumber> <- locations];
 			
 			if (size({fId | <fId, _> <- locations}) == 1) {
-				println("here <tokenNumbers>");
 				if (max(tokenNumbers) - min(tokenNumbers) < blockSize) {
 					continue;
 				}
