@@ -16,43 +16,147 @@ anno loc Type @ src;
 public void findClones(loc project) {
 	set[Declaration] asts = createAstsFromEclipseProject(project, false);
 	
-	list[list[str]] tokens = [];
+	list[list[tuple[str, loc]]] tokensAndLocations = [];
+	list[loc] files = [];
 	
 	for (ast <- asts) {
-		tokens += [[token | <token, _> <- tokenize(ast)]];
-		println({token | <token, l> <- tokenize(ast), l == |file://NOTHING|});
+		files += ast@src;
+		tokensAndLocations += [tokenize(ast)];
+		//println({token | <token, l> <- tokenize(ast), l == |file:///unknown|});
 	}
 	
-	blocks = splitInBlocksOf(tokens, 60);
+	list[list[str]] tokens = [[t | <t, _> <- tokenList] | tokenList <- tokensAndLocations];
+		
+	map[list[str], list[tuple[int, int]]] blocks = splitInBlocksOf(tokens, 60);
+	set[tuple[tuple[int,int], tuple[int,int], int]] expandedClonedBlocks = expandClonedBlocks(blocks, 60);
+	
+	for (expandedClonedBlock <- expandedClonedBlocks) {
+		<<fId1, tokenNumber1>, <fId2, tokenNumber2>, cloneSize> = expandedClonedBlock;
+		clone1Loc1 = tokensAndLocations[fId1][tokenNumber1][1];
+		println(size(tokensAndLocations[fId1]));
+		clone1Loc2 = tokensAndLocations[fId1][tokenNumber1 + cloneSize - 2][1];
+		
+		clone2Loc1 = tokensAndLocations[fId2][tokenNumber2][1];
+		println(size(tokensAndLocations[fId2]));
+		println(tokenNumber2);
+		println(cloneSize);
+		clone2Loc2 = tokensAndLocations[fId2][tokenNumber2 + cloneSize - 2][1];
+		
+		loc1 = totalCoverage([clone1Loc1, clone1Loc2]);
+		loc2 = totalCoverage([clone2Loc1, clone2Loc2]);
+		//println(<fId1, tokenNumber1>);
+		println(clone1Loc1);
+		println(clone1Loc2);
+		//println(<fId2, tokenNumber2>);
+		println(clone2Loc1);
+		println(clone2Loc2);
+		//println(loc1);
+		//println(loc2);
+		//println(readFile(loc1));
+		//println(readFile(loc2));
+	}
+	
 	set[list[tuple[int, int]]] cloneBlocks = clonedBlocks(blocks, 60);
 	set[tuple[int, int]] cloneTokens = clonedLines(blocks, 60);
 	
 	for (<fId, tokenNumber> <- sort([c | c <- cloneTokens])) {
+		//println("<tokensAndLocations[fId][tokenNumber][0]> <files[fId]> <tokensAndLocations[fId][tokenNumber][1]>");
 		;//println(tokens[fId][tokenNumber]);
 	}
 	
 	println(size(cloneTokens));
 }
 
-public node fixSrcs(Declaration ast) {
+public set[tuple[tuple[int,int], tuple[int,int], int]] expandClonedBlocks(blocks, blockSize) {
+	set[list[tuple[int, int]]] cloneBlocks = clonedBlocks(blocks, blockSize);
+	
+	map[tuple[int, int], set[tuple[int, int]]] cloneBlockRelations = ();
+	for (list[tuple[int, int]] cloneBlock <- cloneBlocks) {
+		for (i <- [0 .. size(cloneBlock)]) {
+			cloneBlockRelations[cloneBlock[i]] = {clone | clone <- cloneBlock[..i] + cloneBlock[i + 1..]};
+		}
+	}
+	
+	set[tuple[tuple[int,int], tuple[int,int], int]] expandedClonedBlocks = {};
+	
+	for (tuple[int, int] clone <- cloneBlockRelations) {
+		set[tuple[int, int]] otherClones = {};
+		set[tuple[int, int]] potentialOtherClones = cloneBlockRelations[clone];
+		
+		for (tuple[int, int] otherClone <- potentialOtherClones) {
+			tuple[int, int] previousOtherClone = <otherClone[0], otherClone[1] - 1>;
+			
+			if (!(previousOtherClone in cloneBlockRelations)) {
+				otherClones += otherClone;
+				continue;
+			}
+			
+			if (!(clone in cloneBlockRelations[previousOtherClone])) {
+				otherClones += otherClone;
+				continue;
+			}
+		}
+		
+		if (size(otherClones) > 0) {
+			int cloneSize = blockSize;
+			tuple[int, int] nextClone = <clone[0], clone[1]>;
+			set[tuple[int, int]] nextOtherClones = otherClones;
+			set[tuple[int, int]] potentialNextOtherClones = nextOtherClones;
+		
+			while (size(nextOtherClones) > 0) {
+				cloneSize += 1;
+				nextClone = <nextClone[0], nextClone[1] + 1>;
+				potentialNextOtherClones = {<oc[0], oc[1] + 1> | oc <- nextOtherClones};
+				nextOtherClones = {};
+				
+				for (tuple[int, int] nextOtherClone <- potentialNextOtherClones) {
+					if (nextOtherClone in cloneBlockRelations && nextClone in cloneBlockRelations[nextOtherClone]) {
+						nextOtherClones += nextOtherClone;
+					}
+				}
+			}
+			
+			cloneSize -= 1;
+			nextOtherClones = potentialNextOtherClones;
+			
+			for (nextOtherClone <- nextOtherClones) {
+				expandedClonedBlocks += <clone, <nextOtherClone[0], nextOtherClone[1] - (cloneSize - blockSize)>, cloneSize>;
+			}
+		}
+	}
+	
+	return expandedClonedBlocks;
+}
+
+public Declaration fixSrcs(Declaration ast) {
 	loc lastSrc = ast@src;
 	
-	return bottom-up visit(ast) {
+	return top-down visit(ast) {
 		case v:variables(_, _): {
 			list[loc] srcs = [];
-			for (variable <- v) {
-				println(variable);
+			for (Type variable <- v) {
+				if (!("src" in getAnnotations(variable))) {
+					variable@src = lastSrc;
+				}
 				srcs += variable@src;	
 			}
 			v@src = totalCoverage(srcs);
 		}
 		case Type e: {
-		
-			println(e);
-			e@src ? lastSrc;
-			println(e);
+			if (!("src" in getAnnotations(e))) {
+				e@src = lastSrc;
+			}	
 		}
 		case Declaration e: {
+			lastSrc = e@src;
+		}
+		case Expression e: {
+			lastSrc = e@src;
+		}
+		case Statement e: {
+			lastSrc = e@src;
+		}
+		case Modifier e: {
 			lastSrc = e@src;
 		}
 	};
@@ -79,7 +183,7 @@ public list[tuple[str, loc]] tokenize(node ast) {
 			;
 		}
 		case a:assignment(lhs, op, rhs): {
-			tokens += <op, a@src ? |file://NOTHING|>;
+			tokens += <op, a@src ? |file:///unknown|>;
 		}
 		case Declaration e: {
 			if ("modifiers" in getAnnotations(e)) { 
@@ -88,28 +192,28 @@ public list[tuple[str, loc]] tokenize(node ast) {
 				}
 			}
 			
-			tokens += <getName(e), e@src ? |file://NOTHING|>;	
+			tokens += <getName(e), e@src ? |file:///unknown|>;	
 		}
 		
 		case e:\infix(_, operator, _): {
-			tokens += <operator, e@src ? |file://NOTHING|>;
+			tokens += <operator, e@src ? |file:///unknown|>;
 		}
 		case e:\postfix(_, operator): {
-			tokens += <operator, e@src ? |file://NOTHING|>;
+			tokens += <operator, e@src ? |file:///unknown|>;
 		}
 		case e:\prefix(operator, _): {
-			tokens += <operator, e@src ? |file://NOTHING|>;
+			tokens += <operator, e@src ? |file:///unknown|>;
 		}
 		case Expression e: {
-			tokens += <getName(e), e@src ? |file://NOTHING|>;
+			tokens += <getName(e), e@src ? |file:///unknown|>;
 		}
 		
 		case Statement e: {
-			tokens += <getName(e), e@src ? |file://NOTHING|>;
+			tokens += <getName(e), e@src ? |file:///unknown|>;
 		}
 		
 		case Type e: {
-			tokens += <"type", e@src ? |file://NOTHING|>;
+			tokens += <"type", e@src ? |file:///unknown|>;
 		}
 	};
 	
@@ -178,10 +282,11 @@ private set[tuple[int, int]] clonedLines(map[list[str], list[tuple[int, int]]] b
 }
 
 public loc totalCoverage(list[loc] locs) {
-	total = locs[0];
-	last = locs[size(locs)-1];
+	loc total = locs[0];
+	loc last = locs[size(locs)-1];
 	total.end.line = last.end.line;
 	total.end.column = last.end.column;
+	total.length = (0 | it + location.length | location <- locs);
 	return total;
 }
 
