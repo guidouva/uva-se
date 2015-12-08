@@ -127,7 +127,7 @@ public list[tuple[token_t, loc]] tokenize(node ast) {
 // Returns a map with the location (file + linenumber) of each block
 // and the number of lines over all the files. 
 private map[block_t, list[tokenlocation_t]] splitInBlocksOf(list[list[token_t]] tokensList, int blockSize) {
-	map[block_t, list[blocklocation_t]] blocks = ();
+	map[block_t, list[tokenlocation_t]] blocks = ();
 	
 	for (i <- [0 .. size(tokensList)]) {
 		tokens = tokensList[i];
