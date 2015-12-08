@@ -156,19 +156,19 @@ private rel[tokenlocation_t,tokenlocation_t] clonedBlocks(map[block_t, list[toke
 		locations = blocks[block];
 		
 		if (size(locations) > 1) {
-			tokenNumbers = [tokenNumber | <_, tokenNumber> <- locations];
+			//tokenNumbers = [tokenNumber | <_, tokenNumber> <- locations];
 			
-			if (size({fId | <fId, _> <- locations}) == 1) {
-				if (max(tokenNumbers) - min(tokenNumbers) < blockSize) {
-					continue;
-				}
-			}
+			//if (size({fId | <fId, _> <- locations}) == 1) {
+				//if (max(tokenNumbers) - min(tokenNumbers) < blockSize) {
+					//continue;
+				//}
+			//}
 				
 			clones += { <l1,l2> | l1 <- locations, l2 <- locations, l1 != l2 };
 		}
 	}
 	
-	return clones + invert(clones);
+	return clones;
 }
 
 private set[tokenlocation_t] clonedLines(map[block_t, list[tokenlocation_t]] blocks, int blockSize) {
