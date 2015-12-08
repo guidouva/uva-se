@@ -130,14 +130,14 @@ private map[block_t, list[tokenlocation_t]] splitInBlocksOf(list[list[token_t]] 
 	map[block_t, list[blocklocation_t]] blocks = ();
 	
 	for (i <- [0 .. size(tokensList)]) {
-		list[token] tokens = tokensList[i];
+		tokens = tokensList[i];
 		
 		if (size(tokens) < blockSize) {
 			continue;
 		}
 		
 		for (j <- [0 .. size(tokens) - (blockSize - 1)]) {
-			block_t block = tokens[j .. j + blockSize];
+			block = tokens[j .. j + blockSize];
 			if (block notin blocks) {
 				blocks[block] = [<i, j>];
 			} else {
