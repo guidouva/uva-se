@@ -11,6 +11,7 @@ import List;
 import Set;
 import Map;
 import Relation;
+import String;
 
 import metrics::Duplication;
 
@@ -22,7 +23,7 @@ alias token_t = str;
 alias tokenlocation_t = tuple[fid_t,tokenindex_t];
 alias block_t = list[token_t];
 
-public void findClones(loc project) {
+public tuple[set[tuple[tokenlocation_t, tokenlocation_t, int]], list[list[tuple[token_t, loc]]]] findClones(loc project) {
 	int blockSize = 8;
 	set[Declaration] asts = createAstsFromEclipseProject(project, false);
 	
@@ -32,35 +33,112 @@ public void findClones(loc project) {
 		files += ast@src;
 		tokensAndLocations += [tokenize(ast)];
 	}
+	
 	list[list[token_t]] tokens = [[t | <t, _> <- tokenList] | tokenList <- tokensAndLocations];
-	
 	map[block_t, list[tokenlocation_t]] blocks = splitInBlocksOf(tokens, blockSize);
-	rel[tokenlocation_t, tokenlocation_t] cloneBlocks = clonedBlocks(blocks, blockSize);
-	set[tokenlocation_t] cloneTokens = clonedLines(blocks, blockSize);
-		
-	set[tuple[tokenlocation_t, tokenlocation_t, int]] expandedClonedBlocks = expandClonedBlocks(blocks, blockSize);
 	
-	for (expandedClonedBlock:<<fId1, tokenNumber1>, <fId2, tokenNumber2>, cloneSize> <- expandedClonedBlocks) {
-		clone1Loc1 = tokensAndLocations[fId1][tokenNumber1][1];
-		clone1Loc2 = tokensAndLocations[fId1][tokenNumber1 + cloneSize - 1][1];
-		clone2Loc1 = tokensAndLocations[fId2][tokenNumber2][1];
-		clone2Loc2 = tokensAndLocations[fId2][tokenNumber2 + cloneSize - 1][1];
+	return <expandClonedBlocks(blocks, blockSize), tokensAndLocations>;
+}
+
+public void writeClones(loc project, loc destination) {
+	<blocks, tokensAndLocations> = findClones(project);
+	
+	writeFile(destination, "{");
+	clonepairId = 0;
+	
+	for (<clone1, clone2, cloneSize> <- blocks) {
+		appendToFile(destination, "\n  \"<clonepairId>\" : {");
 		
-		// TODO, fix location length. Read file manually?
-		//loc1 = totalCoverage([clone1Loc1, clone1Loc2]);
-		//loc2 = totalCoverage([clone2Loc1, clone2Loc2]);
+		for (<<fId, tokenNumber>, i> <- [<clone1, 0>, <clone2, 1>]) {
+			cloneLocs = [l | <_, l> <- tokensAndLocations[fId][tokenNumber .. tokenNumber + cloneSize - 1]];
+			
+			loc loc1;
+			for (\loc <- cloneLocs) {
+				if (\loc != |file:///unknown|) {
+					loc1 = \loc;
+					break;
+				}
+			}
+			
+			loc loc2;
+			for (\loc <- reverse(cloneLocs)) {
+				if (\loc != |file:///unknown|) {
+					loc2 = \loc;
+					break;
+				}
+			}
+			
+			map[str, str] output = ();
+			
+			output["filename"] = loc1.uri;
+			output["begin"] = "<loc1.begin.line>";
+			output["end"] = "<loc2.end.line>";
+			output["text"] = escape(getTextBetween(loc1, loc2), ("\n" : "\\n", "\t" : "\\t"));
+			
+			appendToFile(destination, "\n    \"<i>\" : ");
+			appendJSON(destination, output, 2);
+			if (i == 0) {
+				appendToFile(destination, ",");
+			}
+		}
 		
-		println("clone1");
-		println("<tokens[fId1][tokenNumber1]> <clone1Loc1>");
-		println("<tokens[fId1][tokenNumber1]> <clone1Loc2>");
+		appendToFile(destination, "\n  }");
 		
-		println("clone2");
-		println("<tokens[fId2][tokenNumber2]> <clone2Loc1>");
-		println("<tokens[fId2][tokenNumber2]> <clone2Loc2>");
-		println();
+		if (clonepairId < size(blocks) - 1) {
+			appendToFile(destination, ",");
+		}
+		
+		clonepairId += 1;
 	}
+	
+	appendToFile(destination, "\n}");
+}
+
+private void appendJSON(loc file, map[str, str] content, int indentationLevel) {
+	indentationInner = ("" | it + "  " | _ <- [0..indentationLevel + 1]);
+	indentationOuter = ("" | it + "  " | _ <- [0..indentationLevel]);
+	
+	appendToFile(file, "\n");	
+	appendToFile(file, indentationOuter);
+	appendToFile(file, "{");
+	
+	keys = [key | key <- content];
+	for (i <- [0..size(keys)]) {
+		appendToFile(file, "\n");
+		appendToFile(file, indentationInner);
 		
-	println("Number of cloned tokens <size(cloneTokens)>.");
+		appendToFile(file, "\"<keys[i]>\" : \"<content[keys[i]]>\"");
+		
+		if (i != size(keys) - 1) {
+			appendToFile(file, ",");
+		}
+		
+	}
+	
+	appendToFile(file, "\n");
+	appendToFile(file, indentationOuter);
+	appendToFile(file, "}");
+}
+
+public str getTextBetween(loc loc1, loc loc2) {
+	if (loc1 == loc2 || loc1 == |file:///unknown|) {
+		return "";
+	} 
+	
+	list[str] lines = [];
+	
+	i = 1;
+	for (line <- readFileLines(toLocation(loc1.uri))) {
+		if (i >= loc1.begin.line && i <= loc2.end.line) {
+			lines += line;
+		}
+		else if (i > loc2.end.line) {
+			break;
+		}
+		i += 1;
+	}
+	
+	return intercalate("\n", lines);
 }
 
 public set[tuple[tokenlocation_t, tokenlocation_t, int]] expandClonedBlocks(blocks, blockSize) {
