@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+.comparison rect {
+  fill: #333333;
+}
+
+.comparison foreignObject {
+  color: white;
+  font: 15px "Courier New";
+  text-anchor: end;
+}
+</style>
+
+<svg class="comparison"></svg>
+
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script>
+var width = 1200,
+    height = 400;
+
+var comparisonfield = d3.select(".comparison")
+    .attr("width", width)
+    .attr("height", height);
+
+d3.json("test.json", function(error, data) {
+  showPair([data[0][0], data[0][1]]);
+  showPair([data[1][0], data[1][1]]);
+});
+
+function showPair(pair) {
+  var divisionWidth = 0.01 * width;
+  var textfieldWidth = width / 2 - divisionWidth;
+  var xs = [0, textfieldWidth + divisionWidth];
+
+  var textfield = comparisonfield.selectAll("g")
+      .data(pair);
+
+  var textfieldEnter = textfield.enter()
+      .append("g")
+      .attr("transform", function(d, i) {return "translate(" + xs[i] + ", 0)"; });
+  
+  textfieldEnter.append("rect")
+      .attr("width", textfieldWidth)
+      .attr("height", height);
+
+  textfieldEnter.append("foreignObject")
+      .attr("width", textfieldWidth)
+      .attr("height", height);
+
+  textfield.select("foreignObject")
+      .html(function(d) {
+        var text = d.text;
+        text = addLineNumbers(text, d.begin);
+        text = d.filename + "\n\n" + text
+        text = text.replace(/\n/g, "<br>").replace(/\t/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
+        return text
+      });
+}
+
+function addLineNumbers(text, beginLineNumber) {
+  var lines = text.split("\n");
+
+  for (var i = 0; i < lines.length; i++) {
+    lines[i] = (beginLineNumber + i) + ") " + lines[i];
+  }
+
+  return lines.join("\n");
+}
+
+
+</script>
