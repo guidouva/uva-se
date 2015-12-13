@@ -24,7 +24,7 @@ alias tokenlocation_t = tuple[fid_t,tokenindex_t];
 alias block_t = list[token_t];
 
 public tuple[set[tuple[tokenlocation_t, tokenlocation_t, int]], list[list[tuple[token_t, loc]]]] findClones(loc project) {
-	int blockSize = 8;
+	int blockSize = 60;
 	set[Declaration] asts = createAstsFromEclipseProject(project, false);
 	
 	list[loc] files = [];
@@ -73,7 +73,12 @@ public void writeClones(loc project, loc destination) {
 			output["filename"] = loc1.uri;
 			output["begin"] = "<loc1.begin.line>";
 			output["end"] = "<loc2.end.line>";
-			output["text"] = escape(getTextBetween(loc1, loc2), ("\n" : "\\n", "\t" : "\\t"));
+			output["text"] = escape(getTextBetween(loc1, loc2), (
+				"\n" : "\\n",
+				"\t" : "\\t",
+				"\\" : "\\\\",
+				"\"" : "\\\""
+			));
 			
 			appendToFile(destination, "\n    \"<i>\" : ");
 			appendJSON(destination, output, 2);
