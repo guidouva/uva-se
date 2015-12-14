@@ -83,6 +83,8 @@ public void writeClones(loc project, loc destination) {
 				}
 			}
 			
+			println("<i>: <[clone1, clone2][i]>, <loc1>, <loc2>");
+			
 			if(loc1.uri notin filesIndex) {
 				filesIndex[loc1.uri] = size(fileuris);
 				fileuris += <loc1.uri, size(tokensAndLocations[fId])>;

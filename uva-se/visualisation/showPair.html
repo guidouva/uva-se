@@ -1,61 +1,142 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <style>
+div#browserContainer {
+  height: 400px;
+  width: 650px;
+  overflow: scroll;
+ }
+
+div#comparisonContainer {
+  height: 400px;
+  width: 650px;
+  overflow: scroll;
+ }
+
+.browser rect {
+  fill: #555555;
+}
+
+.browser foreignObject {
+  color: white;
+  font: 10pt "Courier New";
+  text-anchor: end;
+}
+
 .comparison rect {
   fill: #333333;
 }
 
-.comparison foreignObject {
+.comparison {
   color: white;
-  font: 15px "Courier New";
-  text-anchor: end;
+  font: 10pt "Courier New";
+  text-anchor: end;  
 }
 </style>
 
-<svg class="comparison"></svg>
+<div id="browserContainer"> <svg class="browser" id="browser"></svg> </div>
+<div id="comparisonContainer"> <svg class="comparison" id="comparison"></svg> </div>
 
 <script src="//d3js.org/d3.v3.min.js"></script>
 <script>
-var width = 1200,
-    height = 400;
+var comparisonWidth = 1200,
+    comparisonHeight = 400,
+    browserWidth = 600,
+    browserHeight = 400;
 
 var comparisonfield = d3.select(".comparison")
-    .attr("width", width)
-    .attr("height", height);
+    .attr("width", comparisonWidth)
+    .attr("height", comparisonHeight);
 
-d3.json("test.json", function(error, data) {
-  showPair([data[0][0], data[0][1]]);
-  showPair([data[1][0], data[1][1]]);
+var browserfield = d3.select(".browser")
+    .attr("width", browserWidth)
+    .attr("height", browserHeight);
+
+d3.json("smallsql.json", function(error, data) {
+  showPair([data.clonedata[0][0], data.clonedata[0][1]], data.files);
+  showPair([data.clonedata[1][0], data.clonedata[1][1]], data.files);
+
+  showFileBrowsers(data.clonedata[0][0].file, data.clonedata[0][1].file, data.files, data.clonedata);
 });
 
-function showPair(pair) {
-  var divisionWidth = 0.01 * width;
-  var textfieldWidth = width / 2 - divisionWidth;
+function showFileBrowsers(fileId1, fileId2, files, clonedata) {
+  pairs = [];
+
+  for (var i = 0; i < clonedata.length; i++) {
+    if (clonedata[i][0].file == fileId1 && clonedata[i][1].file == fileId2) {
+          pairs.push(clonedata[i]);
+    }
+  }
+  
+
+  var barHeight = 20;
+  var divisionHeight = 5;
+  
+  browserHeight = pairs.length * (barHeight + divisionHeight); 
+  browserfield.attr("height", browserHeight)
+
+  var browserfieldUpdate = browserfield.selectAll("g")
+      .data(pairs);
+
+  var browserfieldEnter = browserfieldUpdate.enter().append("g")
+      .attr("transform", function(d, i) {return "translate(0, " + (i * barHeight + i * divisionHeight) + ")"; });
+  
+  browserfieldEnter.append("rect")
+      .attr("width", browserWidth)
+      .attr("height", barHeight)
+      .on("click", function(d) {
+        showPair(d, files);
+      });
+
+  browserfieldEnter.append("foreignObject")
+      .attr("width", browserWidth)
+      .attr("height", barHeight);
+
+  browserfieldUpdate.select("foreignObject")
+      .html(function(d, i) {
+        return i;
+      });
+}
+
+function showPair(pair, files) {
+  var divisionWidth = 0.01 * comparisonWidth;
+  var textfieldWidth = comparisonWidth / 2 - divisionWidth;
   var xs = [0, textfieldWidth + divisionWidth];
 
   var textfield = comparisonfield.selectAll("g")
       .data(pair);
 
-  var textfieldEnter = textfield.enter()
-      .append("g")
+  var textfieldEnter = textfield.enter().append("g")
       .attr("transform", function(d, i) {return "translate(" + xs[i] + ", 0)"; });
   
   textfieldEnter.append("rect")
       .attr("width", textfieldWidth)
-      .attr("height", height);
+      .attr("height", "100%");
 
   textfieldEnter.append("foreignObject")
       .attr("width", textfieldWidth)
-      .attr("height", height);
+      .attr("height", "100%");
+
+  var height = comparisonHeight / getEmSize(document.getElementById("comparison"));
 
   textfield.select("foreignObject")
       .html(function(d) {
         var text = d.text;
         text = addLineNumbers(text, d.begin);
-        text = d.filename + "\n\n" + text
+        text = files[d.file] + "\n\n" + text
+
+        height = Math.max(text.split("\n").length, height);
+        console.log("height: " + height + " " + text.split("\n").length + " " + getEmSize(document.getElementById("comparison")));
         text = text.replace(/\n/g, "<br>").replace(/\t/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
-        return text
+        return text;
       });
+
+  console.log(height +  " " + height * getEmSize(document.getElementById("comparison")));
+  comparisonfield.attr("height", height * (getEmSize(document.getElementById("comparison"))));
+}
+
+function getEmSize(element) {
+  return Number(getComputedStyle(element, "").fontSize.match(/(\d*(\.\d*)?)px/)[1]);
 }
 
 function addLineNumbers(text, beginLineNumber) {
