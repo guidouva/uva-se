@@ -173,15 +173,12 @@ function fileHierarchy(data, filter) {
 
   function unique(element, index, self) { return self.indexOf(element) === index; }
 
-  if(filter instanceof Array) {
+  if(filter instanceof Array)
     var filterids = filter.map(linkid); 
-    console.log(filterids);
-  }
 
   data.clonedata.forEach(function(pair){ 
     var id1 = pair[0]['file'],
         id2 = pair[1]['file'];
-    console.log(linkid([{value:id1},{value:id2}]));
 
     if(filter instanceof Array && filterids.indexOf(linkid([{value:id1},{value:id2}])) === -1)
       return;
@@ -192,8 +189,6 @@ function fileHierarchy(data, filter) {
     n1.clones = n1.clones.concat([n2]).filter(unique);
     n2.clones = n2.clones.concat([n1]).filter(unique);
   });
-
-  console.log(map);
 
   return map[""];
 }
