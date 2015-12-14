@@ -11,9 +11,12 @@ import List;
 import Set;
 import Map;
 import Relation;
+import ListRelation;
 import String;
+import JsValue;
 
 import metrics::Duplication;
+import metrics::helpers::Code;
 
 anno loc Type @ src;
 
@@ -22,8 +25,9 @@ alias tokenindex_t = int;
 alias token_t = str;
 alias tokenlocation_t = tuple[fid_t,tokenindex_t];
 alias block_t = list[token_t];
+alias clone_t = tuple[tokenlocation_t,tokenlocation_t,int];
 
-public tuple[set[tuple[tokenlocation_t, tokenlocation_t, int]], list[list[tuple[token_t, loc]]]] findClones(loc project) {
+public tuple[set[clone_t], list[list[tuple[token_t, loc]]]] findClones(loc project) {
 	int blockSize = 60;
 	set[Declaration] asts = createAstsFromEclipseProject(project, false);
 	
@@ -40,14 +44,25 @@ public tuple[set[tuple[tokenlocation_t, tokenlocation_t, int]], list[list[tuple[
 	return <expandClonedBlocks(blocks, blockSize), tokensAndLocations>;
 }
 
+alias jsobj_t = map[str,value];
+alias fileinfo_t = tuple[str,int];
+alias clonepair_t = tuple[jsobj_t, jsobj_t];
+
 public void writeClones(loc project, loc destination) {
 	<blocks, tokensAndLocations> = findClones(project);
 	
-	writeFile(destination, "{");
-	clonepairId = 0;
+	jsobj_t json = ();
+	
+	//writeFile(destination, "");
+	list[fileinfo_t] fileuris = [];
+	map[str,int] filesIndex = ();
+
+	list[clonepair_t] clonedata = [];
+	map[int, map[int,real]] duplicationdata = ();
 	
 	for (<clone1, clone2, cloneSize> <- blocks) {
-		appendToFile(destination, "\n  \"<clonepairId>\" : {");
+		clonepair_t clonepair = <(), ()>;
+		tuple[int,int] uris = <0,0>;
 		
 		for (<<fId, tokenNumber>, i> <- [<clone1, 0>, <clone2, 1>]) {
 			cloneLocs = [l | <_, l> <- tokensAndLocations[fId][tokenNumber .. tokenNumber + cloneSize - 1]];
@@ -68,61 +83,35 @@ public void writeClones(loc project, loc destination) {
 				}
 			}
 			
-			map[str, str] output = ();
-			
-			output["filename"] = loc1.uri;
-			output["begin"] = "<loc1.begin.line>";
-			output["end"] = "<loc2.end.line>";
-			output["text"] = escape(getTextBetween(loc1, loc2), (
-				"\n" : "\\n",
-				"\t" : "\\t",
-				"\\" : "\\\\",
-				"\"" : "\\\""
-			));
-			
-			appendToFile(destination, "\n    \"<i>\" : ");
-			appendJSON(destination, output, 2);
-			if (i == 0) {
-				appendToFile(destination, ",");
+			if(loc1.uri notin filesIndex) {
+				filesIndex[loc1.uri] = size(fileuris);
+				fileuris += <loc1.uri, size(tokensAndLocations[fId])>;
 			}
+			
+			clonepair[i] = (
+				"file" : filesIndex[loc1.uri],
+				"begin" : loc1.begin.line,
+				"end" : loc2.end.line,
+				"text" : getTextBetween(loc1, loc2)
+			);
+			uris[i] = filesIndex[loc1.uri];
 		}
 		
-		appendToFile(destination, "\n  }");
-		
-		if (clonepairId < size(blocks) - 1) {
-			appendToFile(destination, ",");
-		}
-		
-		clonepairId += 1;
-	}
-	
-	appendToFile(destination, "\n}");
-}
+		clonedata += clonepair;
 
-private void appendJSON(loc file, map[str, str] content, int indentationLevel) {
-	indentationInner = ("" | it + "  " | _ <- [0..indentationLevel + 1]);
-	indentationOuter = ("" | it + "  " | _ <- [0..indentationLevel]);
-	
-	appendToFile(file, "\n");	
-	appendToFile(file, indentationOuter);
-	appendToFile(file, "{");
-	
-	keys = [key | key <- content];
-	for (i <- [0..size(keys)]) {
-		appendToFile(file, "\n");
-		appendToFile(file, indentationInner);
-		
-		appendToFile(file, "\"<keys[i]>\" : \"<content[keys[i]]>\"");
-		
-		if (i != size(keys) - 1) {
-			appendToFile(file, ",");
-		}
-		
+		leastLOC = min(fileuris[uris[0]][1], fileuris[uris[1]][1]);
+		largestDuplicationRatio = toReal(cloneSize) / toReal(leastLOC);
+
+		if(uris[0] notin duplicationdata) duplicationdata[uris[0]] = ();
+		if(uris[1] notin duplicationdata[uris[0]]) duplicationdata[uris[0]][uris[1]] = 0.0;
+		duplicationdata[uris[0]][uris[1]] += largestDuplicationRatio;
 	}
 	
-	appendToFile(file, "\n");
-	appendToFile(file, indentationOuter);
-	appendToFile(file, "}");
+	json["files"] = [ escape(uri, ("\\":"/")) | <uri,_> <- fileuris ];
+	json["clonedata"] = clonedata;
+	json["duplicationdata"] = duplicationdata;
+	
+	writeFile(destination, toJSON(json));
 }
 
 public str getTextBetween(loc loc1, loc loc2) {
@@ -146,9 +135,9 @@ public str getTextBetween(loc loc1, loc loc2) {
 	return intercalate("\n", lines);
 }
 
-public set[tuple[tokenlocation_t, tokenlocation_t, int]] expandClonedBlocks(blocks, blockSize) {
+public set[clone_t] expandClonedBlocks(blocks, blockSize) {
 	rel[tokenlocation_t,tokenlocation_t] cloneBlocks = clonedBlocks(blocks, blockSize);
-	set[tuple[tokenlocation_t, tokenlocation_t, int]] expandedClonedBlocks = {};
+	set[clone_t] expandedClonedBlocks = {};
 	
 	// expand blocks downwards
 	for (<clone1, clone2> <- cloneBlocks) {
@@ -173,7 +162,7 @@ public set[tuple[tokenlocation_t, tokenlocation_t, int]] expandClonedBlocks(bloc
 	}
 	
 	// filter nested clones
-	map[tuple[fid_t, fid_t], list[tuple[tokenlocation_t, tokenlocation_t, int]]] cache = ();
+	map[tuple[fid_t, fid_t], list[clone_t]] cache = ();
 	
 	println(expandedClonedBlocks);
 	for (clonepair:<clone1, clone2, cloneSize> <- expandedClonedBlocks)  {
@@ -185,7 +174,7 @@ public set[tuple[tokenlocation_t, tokenlocation_t, int]] expandClonedBlocks(bloc
 		cache[<clone1[0], clone2[0]>] += clonepair;
 	}
 	
-	set[tuple[tokenlocation_t, tokenlocation_t, int]] result = {};
+	set[clone_t] result = {};
 	
 	for (filepair:<fid1, fid2> <- cache) {
 		clonepairs = cache[filepair];
