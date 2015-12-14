@@ -7,12 +7,6 @@ div#browserContainer {
   overflow: scroll;
  }
 
-div#comparisonContainer {
-  height: 400px;
-  width: 650px;
-  overflow: scroll;
- }
-
 .browser rect {
   fill: #555555;
 }
@@ -23,30 +17,36 @@ div#comparisonContainer {
   text-anchor: end;
 }
 
-.comparison rect {
-  fill: #333333;
-}
-
 .comparison {
+  height: 400px;
+  width: 700px;
+  white-space: nowrap;
+  display: inline-block;
+
+  background-color: #333333;
   color: white;
+  overflow: scroll;
   font: 10pt "Courier New";
   text-anchor: end;  
 }
 </style>
 
 <div id="browserContainer"> <svg class="browser" id="browser"></svg> </div>
-<div id="comparisonContainer"> <svg class="comparison" id="comparison"></svg> </div>
+<div class="comparison" id="comparisonLeft"></div> 
+<div class="comparison" id="comparisonRight"></div> 
 
 <script src="//d3js.org/d3.v3.min.js"></script>
 <script>
-var comparisonWidth = 1200,
-    comparisonHeight = 400,
-    browserWidth = 600,
+var browserWidth = 600,
     browserHeight = 400;
 
-var comparisonfield = d3.select(".comparison")
-    .attr("width", comparisonWidth)
-    .attr("height", comparisonHeight);
+var comparisonLeft = d3.select("#comparisonLeft")
+    .attr("width", "100%")
+    .attr("height", "100%");
+
+var comparisonRight = d3.select("#comparisonRight")
+    .attr("width", "100%")
+    .attr("height", "100%");
 
 var browserfield = d3.select(".browser")
     .attr("width", browserWidth)
@@ -68,7 +68,6 @@ function showFileBrowsers(fileId1, fileId2, files, clonedata) {
     }
   }
   
-
   var barHeight = 20;
   var divisionHeight = 5;
   
@@ -99,40 +98,25 @@ function showFileBrowsers(fileId1, fileId2, files, clonedata) {
 }
 
 function showPair(pair, files) {
-  var divisionWidth = 0.01 * comparisonWidth;
-  var textfieldWidth = comparisonWidth / 2 - divisionWidth;
-  var xs = [0, textfieldWidth + divisionWidth];
+    showClone(comparisonLeft, pair[0], files);
+    showClone(comparisonRight, pair[1], files);
+}
 
-  var textfield = comparisonfield.selectAll("g")
-      .data(pair);
+function showClone(field, clone, files) {
+  var height = 0;
 
-  var textfieldEnter = textfield.enter().append("g")
-      .attr("transform", function(d, i) {return "translate(" + xs[i] + ", 0)"; });
-  
-  textfieldEnter.append("rect")
-      .attr("width", textfieldWidth)
-      .attr("height", "100%");
-
-  textfieldEnter.append("foreignObject")
-      .attr("width", textfieldWidth)
-      .attr("height", "100%");
-
-  var height = comparisonHeight / getEmSize(document.getElementById("comparison"));
-
-  textfield.select("foreignObject")
-      .html(function(d) {
+  field.data([clone])
+    .html(function(d) {
         var text = d.text;
         text = addLineNumbers(text, d.begin);
         text = files[d.file] + "\n\n" + text
 
         height = Math.max(text.split("\n").length, height);
-        console.log("height: " + height + " " + text.split("\n").length + " " + getEmSize(document.getElementById("comparison")));
         text = text.replace(/\n/g, "<br>").replace(/\t/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
         return text;
       });
 
-  console.log(height +  " " + height * getEmSize(document.getElementById("comparison")));
-  comparisonfield.attr("height", height * (getEmSize(document.getElementById("comparison"))));
+  field.attr("height", height * (getEmSize(document.getElementById("comparisonLeft"))));
 }
 
 function getEmSize(element) {
