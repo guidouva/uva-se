@@ -1,17 +1,16 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <style>
-div#browserContainer {
+.browser {
+  background-color: #555555;
   height: 400px;
   width: 650px;
   overflow: scroll;
+  white-space: nowrap;
  }
 
-.browser rect {
+.browserItem {
   fill: #555555;
-}
-
-.browser foreignObject {
   color: white;
   font: 10pt "Courier New";
   text-anchor: end;
@@ -31,40 +30,30 @@ div#browserContainer {
 }
 </style>
 
-<div id="browserContainer"> <svg class="browser" id="browser"></svg> </div>
+<div class="browser" id="browser"></div>
 <div class="comparison" id="comparisonLeft"></div> 
 <div class="comparison" id="comparisonRight"></div> 
 
 <script src="//d3js.org/d3.v3.min.js"></script>
 <script>
-var browserWidth = 600,
-    browserHeight = 400;
+var comparisonLeft = d3.select("#comparisonLeft");
+var comparisonRight = d3.select("#comparisonRight");
 
-var comparisonLeft = d3.select("#comparisonLeft")
-    .attr("width", "100%")
-    .attr("height", "100%");
-
-var comparisonRight = d3.select("#comparisonRight")
-    .attr("width", "100%")
-    .attr("height", "100%");
-
-var browserfield = d3.select(".browser")
-    .attr("width", browserWidth)
-    .attr("height", browserHeight);
+var browserfield = d3.select(".browser");
 
 d3.json("smallsql.json", function(error, data) {
   showPair([data.clonedata[0][0], data.clonedata[0][1]], data.files);
   showPair([data.clonedata[1][0], data.clonedata[1][1]], data.files);
 
-  showFileBrowsers(data.clonedata[0][0].file, data.clonedata[0][1].file, data.files, data.clonedata);
+  showFileBrowsers(data.clonedata[0][0].file, [data.clonedata[0][1].file], data.files, data.clonedata);
 });
 
-function showFileBrowsers(fileId1, fileId2, files, clonedata) {
+function showFileBrowsers(fileId, otherFileIds, files, clonedata) {
   pairs = [];
 
   for (var i = 0; i < clonedata.length; i++) {
-    if (clonedata[i][0].file == fileId1 && clonedata[i][1].file == fileId2) {
-          pairs.push(clonedata[i]);
+    if (clonedata[i][0].file == fileId && otherFileIds.indexOf(clonedata[i][1].file) != -1) {
+      pairs.push(clonedata[i]);
     }
   }
   
@@ -74,26 +63,19 @@ function showFileBrowsers(fileId1, fileId2, files, clonedata) {
   browserHeight = pairs.length * (barHeight + divisionHeight); 
   browserfield.attr("height", browserHeight)
 
-  var browserfieldUpdate = browserfield.selectAll("g")
-      .data(pairs);
+  var browserfieldUpdate = browserfield.selectAll("div").data(pairs);
 
-  var browserfieldEnter = browserfieldUpdate.enter().append("g")
-      .attr("transform", function(d, i) {return "translate(0, " + (i * barHeight + i * divisionHeight) + ")"; });
-  
-  browserfieldEnter.append("rect")
-      .attr("width", browserWidth)
+  browserfieldUpdate.enter().append("div")
+      .attr("x", 0)
+      .attr("y", function(d, i) {return (i * barHeight + i * divisionHeight);})
+      .attr("width", "100%")
       .attr("height", barHeight)
-      .on("click", function(d) {
-        showPair(d, files);
-      });
-
-  browserfieldEnter.append("foreignObject")
-      .attr("width", browserWidth)
-      .attr("height", barHeight);
-
-  browserfieldUpdate.select("foreignObject")
+      .attr("class", "browserItem")
+      .on("click", function(d) {showPair(d, files);});
+  
+  browserfieldUpdate
       .html(function(d, i) {
-        return i;
+        return i + " " + files[d[0].file] + " " + files[d[1].file];
       });
 }
 
@@ -103,24 +85,15 @@ function showPair(pair, files) {
 }
 
 function showClone(field, clone, files) {
-  var height = 0;
-
   field.data([clone])
     .html(function(d) {
         var text = d.text;
         text = addLineNumbers(text, d.begin);
         text = files[d.file] + "\n\n" + text
 
-        height = Math.max(text.split("\n").length, height);
         text = text.replace(/\n/g, "<br>").replace(/\t/g, "&nbsp;&nbsp;&nbsp;&nbsp;");
         return text;
       });
-
-  field.attr("height", height * (getEmSize(document.getElementById("comparisonLeft"))));
-}
-
-function getEmSize(element) {
-  return Number(getComputedStyle(element, "").fontSize.match(/(\d*(\.\d*)?)px/)[1]);
 }
 
 function addLineNumbers(text, beginLineNumber) {
