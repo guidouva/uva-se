@@ -28,20 +28,32 @@ alias block_t = list[token_t];
 alias clone_t = tuple[tokenlocation_t,tokenlocation_t,int];
 
 public tuple[set[clone_t], list[list[tuple[token_t, loc]]]] findClones(loc project) {
-	int blockSize = 60;
+	println("Loading project");
 	set[Declaration] asts = createAstsFromEclipseProject(project, false);
+	println("Finished loading project");
 	
+	return findClones(asts);
+}
+
+public tuple[set[clone_t], list[list[tuple[token_t, loc]]]] findClones(set[Declaration] asts) {
+	int blockSize = 120;
+	
+	println("Tokenizing AST");
 	list[loc] files = [];
 	list[list[tuple[token_t, loc]]] tokensAndLocations = [];
 	for (ast <- asts) {
 		files += ast@src;
 		tokensAndLocations += [tokenize(ast)];
 	}
+	println("Finished tokenizing AST");
 	
 	list[list[token_t]] tokens = [[t | <t, _> <- tokenList] | tokenList <- tokensAndLocations];
 	map[block_t, list[tokenlocation_t]] blocks = splitInBlocksOf(tokens, blockSize);
 	
-	return <expandClonedBlocks(blocks, blockSize), tokensAndLocations>;
+	println("Finding clones");
+	result = <expandClonedBlocks(blocks, blockSize), tokensAndLocations>;
+	println("Finished finding clones");
+	return result;
 }
 
 alias jsobj_t = map[str,value];
@@ -49,7 +61,11 @@ alias fileinfo_t = tuple[str,int];
 alias clonepair_t = tuple[jsobj_t, jsobj_t];
 
 public void writeClones(loc project, loc destination) {
-	<blocks, tokensAndLocations> = findClones(project);
+	return writeClones(createAstsFromEclipseProject(project, false), destination);
+}
+
+public void writeClones(set[Declaration] asts, loc destination) {
+	<blocks, tokensAndLocations> = findClones(asts);
 	
 	jsobj_t json = ();
 	
@@ -60,6 +76,7 @@ public void writeClones(loc project, loc destination) {
 	list[clonepair_t] clonedata = [];
 	map[int, map[int,real]] duplicationdata = ();
 	
+	println("Preparing json");
 	for (<clone1, clone2, cloneSize> <- blocks) {
 		clonepair_t clonepair = <(), ()>;
 		tuple[int,int] uris = <0,0>;
@@ -82,8 +99,6 @@ public void writeClones(loc project, loc destination) {
 					break;
 				}
 			}
-			
-			println("<i>: <[clone1, clone2][i]>, <loc1>, <loc2>");
 			
 			if(loc1.uri notin filesIndex) {
 				filesIndex[loc1.uri] = size(fileuris);
@@ -113,6 +128,7 @@ public void writeClones(loc project, loc destination) {
 	json["clonedata"] = clonedata;
 	json["duplicationdata"] = duplicationdata;
 	
+	println("Writing to output");
 	writeFile(destination, toJSON(json));
 }
 
@@ -291,11 +307,13 @@ private map[block_t, list[tokenlocation_t]] splitInBlocksOf(list[list[token_t]] 
 
 private rel[tokenlocation_t,tokenlocation_t] clonedBlocks(map[block_t, list[tokenlocation_t]] blocks, int blockSize) {
 	rel[tokenlocation_t,tokenlocation_t] clones = {};
-	
+	i = 0;
 	for (block <- blocks) {
 		locations = blocks[block];
-		
+		i += 1;
 		if (size(locations) > 1) {
+			println("<i> <size(blocks)> <size(locations)>");
+			
 			tokenNumbers = [tokenNumber | <_, tokenNumber> <- locations];
 			
 			if (size({fId | <fId, _> <- locations}) == 1) {
