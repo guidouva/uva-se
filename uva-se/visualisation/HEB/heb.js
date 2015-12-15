@@ -9,7 +9,20 @@ function HEB(data, container, diameter, radius, innerRadius) {
   this._svg = null; 
   this._filters = [null];
   this._recalculate();
+
+  this._nodeClickListeners = [];
+  this._linkClickListeners = [];
 }
+
+HEB.prototype.data = function(){ return this._data; };
+
+HEB.prototype.pushNodeClickListener = function(f) {
+  this._nodeClickListeners.push(f);
+};
+
+HEB.prototype.pushLinkClickListener = function(f) {
+  this._linkClickListeners.push(f);
+};
 
 HEB.prototype.pushFilter = function(filter) {
   this._filters.push(filter);
@@ -36,20 +49,22 @@ HEB.prototype._recalculate = function() {
 HEB.prototype._nodeclicked = function(node) {
   this.pushFilter(node.clones.map(function(c){return [node,c];}));
   this.redraw();
+  this._nodeClickListeners.forEach(function(f){ f(node); });
 };
 
 HEB.prototype._linkclicked = function(link){
   this.pushFilter([link]);
   this.redraw();
+  this._linkClickListeners.forEach(function(f){ f(link); });
 };
 
 HEB.prototype.redraw = function() {
-  while(this._container[0][0].hasChildNodes())
-    this._container[0][0].removeChild(this._container[0][0].lastChild);
+  emptyNode(this._container);
+  this._container.attr('class','heb');
 
   if(this._filters.length > 1) {
     this._back = this._container.append("button")
-      .style({'display':'block'})
+      .attr('class','heb_back')
       .text("Back")
       .on("click", function(){
         this.popFilter();
@@ -145,16 +160,6 @@ function nodeid(node) {
   return "n"+node.value;
 }
 
-d3.json("smallsql.json", function(error, data) {
-  if (error) throw error;
-  var diameter = 960,
-      radius = diameter / 2,
-      innerRadius = radius - 120,
-      heb = new HEB(data, d3.select("body"), diameter, radius, innerRadius);
-  d3.select(self.frameElement).style("height", diameter + "px");
-  heb.redraw();
-});
-
 function fileHierarchy(data, filter) {
   var map = {};
 
@@ -190,6 +195,9 @@ function fileHierarchy(data, filter) {
     n2.clones = n2.clones.concat([n1]).filter(unique);
   });
 
+  while(map[""].children.length === 1) map[""] = map[""].children[0];
+  map[""].parent = null;
+
   return map[""];
 }
 
@@ -208,3 +216,4 @@ function fileClones(nodes) {
     return linkids.indexOf(linkid(link)) === index;
   });
 }
+

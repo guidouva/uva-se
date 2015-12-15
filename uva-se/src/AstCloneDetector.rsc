@@ -339,22 +339,3 @@ private set[tokenlocation_t] clonedLines(map[block_t, list[tokenlocation_t]] blo
 
 	return clones;
 }
-
-public loc totalCoverage(list[loc] locs) {
-	loc total = locs[0];
-	loc last = locs[size(locs)-1];
-	total.end.line = last.end.line;
-	total.end.column = last.end.column;
-	total.length = (0 | it + location.length | location <- locs);
-	return total;
-}
-
-public list[tuple[token_t,loc]] fixLocationBoundaries(list[tuple[token_t,loc]] tokens) {
-	newtokens = [];
-	for(i <- [0..size(tokens)-1]) {
-		newtokens[i] = <tokens[i][0], tokens[i][1]>;	
-		newtokens[i][1].end.line = newtokens[i+1][1].begin.line;
-		newtokens[i][1].end.column = newtokens[i+1][1].begin.column;
-	}
-	return newtokens;
-}
