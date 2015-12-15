@@ -2,7 +2,8 @@ function Viewer(container) {
   emptyNode(container);
   this._container = container;
 
-  this._filepickercontainer = container.append('div');
+  this._filepickercontainer = container.append('div')
+    .attr('class','viewer_fpcontainer');
   this._hebcontainer = container.append('div');
   this._browsercontainer = container.append('div');
   this._heb = this._browser = null;
@@ -32,10 +33,14 @@ Viewer.prototype._readfileComplete = function(evt) {
 };
 
 Viewer.prototype._reinit = function(data) {
-  var diameter = 960,
+  var diameter = 900,
       radius = diameter / 2,
-      innerRadius = radius - 120,
+      innerRadius = radius - 200,
       heb = new HEB(data, this._hebcontainer, diameter, radius, innerRadius),
       browser = new Browser(heb, this._browsercontainer);
   heb.redraw();
+  window.setTimeout(
+    function(){window.scrollTop = 0;},
+    20
+  );
 };

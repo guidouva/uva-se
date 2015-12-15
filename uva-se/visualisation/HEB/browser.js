@@ -9,6 +9,24 @@ var Browser = function(heb, container) {
   this._comparisonRight = container.append('div')
     .attr({'class':'comparison','id':'comparisonRight'});
 
+  [this._comparisonLeft,this._comparisonRight].forEach(
+    function(comp) {
+      throttleEvent('scroll', 'optimizedScroll', comp[0][0]);
+      comp[0][0].addEventListener(
+        'optimizedScroll',
+        function(evt){
+          var trgt = evt.target === this._comparisonLeft[0][0] ?
+            this._comparisonRight[0][0]
+            : this._comparisonLeft[0][0];
+
+          trgt.scrollTop = evt.target.scrollTop;
+          trgt.scrollLeft = evt.target.scrollLeft;
+        }.bind(this)
+      );
+    }.bind(this)
+  );
+  
+
   heb.pushNodeClickListener(this._HEBNodeClickListener.bind(this));
   heb.pushLinkClickListener(this._HEBLinkClickListener.bind(this));
 };
@@ -37,19 +55,9 @@ Browser.prototype._showFileBrowsers = function(fileId, otherFileIds) {
     }
   }
   
-  var barHeight = 20;
-  var divisionHeight = 5;
-  
-  browserHeight = pairs.length * (barHeight + divisionHeight); 
-  browserfield.attr("height", browserHeight)
-
   var browserfieldUpdate = browserfield.selectAll("div").data(pairs);
 
   browserfieldUpdate.enter().append("div")
-    .attr("x", 0)
-    .attr("y", function(d, i) {return (i * barHeight + i * divisionHeight);})
-    .attr("width", "100%")
-    .attr("height", barHeight)
     .attr("class", "browserItem")
     .on("click", this._showPair.bind(this));
   
@@ -85,10 +93,3 @@ function addLineNumbers(text, beginLineNumber) {
 
   return lines.join("\n");
 }
-
-//d3.json("smallsql.json", function(error, data) {
-//  showPair([data.clonedata[0][0], data.clonedata[0][1]], data.files);
-//  showPair([data.clonedata[1][0], data.clonedata[1][1]], data.files);
-//
-//  showFileBrowsers(data.clonedata[0][0].file, [data.clonedata[0][1].file], data.files, data.clonedata);
-//});

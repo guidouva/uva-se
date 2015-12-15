@@ -60,10 +60,11 @@ HEB.prototype._linkclicked = function(link){
 
 HEB.prototype.redraw = function() {
   emptyNode(this._container);
+  this._container.attr('class','heb');
 
   if(this._filters.length > 1) {
     this._back = this._container.append("button")
-      .style({'display':'block'})
+      .attr('class','heb_back')
       .text("Back")
       .on("click", function(){
         this.popFilter();
@@ -215,14 +216,4 @@ function fileClones(nodes) {
     return linkids.indexOf(linkid(link)) === index;
   });
 }
-
-//d3.json("smallsql.json", function(error, data) {
-//  if (error) throw error;
-//  var diameter = 960,
-//      radius = diameter / 2,
-//      innerRadius = radius - 120;
-//  heb = new HEB(data, d3.select("body"), diameter, radius, innerRadius);
-//  d3.select(self.frameElement).style("height", diameter + "px");
-//  heb.redraw();
-//});
 
