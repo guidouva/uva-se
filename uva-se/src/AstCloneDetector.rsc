@@ -113,7 +113,7 @@ public void writeClones(loc project, loc destination) {
 	json["clonedata"] = clonedata;
 	json["duplicationdata"] = duplicationdata;
 	
-	writeFile(destination, toJSON(json));
+	writeFile(destination, "CLONEDATA = "+toJSON(json)+";");
 }
 
 public str getTextBetween(loc loc1, loc loc2) {
