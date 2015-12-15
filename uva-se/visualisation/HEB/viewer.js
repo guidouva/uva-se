@@ -2,17 +2,38 @@ function Viewer(container) {
   emptyNode(container);
   this._container = container;
 
-//  this._filepickercontainer = container.append('div')
-//    .attr('class','viewer_fpcontainer');
   this._hebcontainer = container.append('div');
   this._browsercontainer = container.append('div');
   this._heb = this._browser = null;
 
-//  this._filepicker = this._filepickercontainer.append('input')
-//    .attr('type','file')
-//    .on('change', this._readfile.bind(this));
+  postProcessCloneData(CLONEDATA);
   this._reinit(CLONEDATA);
 }
+
+function postProcessCloneData(clonedata) {
+  removeCommonPrefix(clonedata.files);
+}
+
+function removeCommonPrefix(files) {
+  var cpl = commonPrefixLength(files);
+  for(var i = 0; cpl > 0 && i < files.length; ++i) {
+    files[i] = files[i].substr(cpl);
+  }
+}
+
+function commonPrefixLength(strs) {
+  if(strs.length === 0) return 0;
+
+  var prefix = strs[0];
+  for(var i = 1; i < strs.length; ++i) {
+    var len = 0;
+    while(len < Math.min(prefix.length, strs[i].length)
+          && prefix[len] === strs[i][len]) ++len;
+    prefix = prefix.substr(0, len);
+  }
+
+  return prefix.length;
+};
 
 Viewer.prototype._readfile = function() {
   var file = this._filepicker[0][0].files[0];
