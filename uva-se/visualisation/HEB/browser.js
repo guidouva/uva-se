@@ -67,22 +67,35 @@ Browser.prototype._showFileBrowsers = function(fileId, otherFileIds) {
     }
   }
 
+  var pairSize = function(p) {
+    return Math.max(p[0].end - p[0].begin, p[1].end - p[1].begin);
+  };
+
+  var pairString = function(p) {
+    return files[p[0].file] + "&nbsp;&nbsp;&nbsp;&nbsp;" + files[p[1].file];
+  };
+
+  pairs.sort(function(e1,e2) {
+    if(pairSize(e2) !== pairSize(e1)) return pairSize(e2) - pairSize(e1);
+    return pairString(e1) < pairString(e2);
+  });
+
   var browserfieldUpdate = browserfield.selectAll("div").data(pairs);
 
   browserfieldUpdate.enter().append("div")
-    .attr("class", "browserItem")
-    .on("click", this._showPair.bind(this));
+    .attr("class", "browserItem biInactive")
+    .on("click", Browser._showPair(this));
   
   browserfieldUpdate
-    .html(function(d, i) {
-      return i + " " + files[d[0].file] + " " + files[d[1].file];
-    });
+    .html(function(p) { return "[" + pairSize(p) + "]&nbsp;&nbsp;&nbsp;&nbsp;" + pairString(p); });
 };
 
-Browser.prototype._showPair = function(pair) {
-  this._showClone(this._comparisonLeft, pair[0]);
-  this._showClone(this._comparisonRight, pair[1]);
-};
+Browser._showPair = function(browser){ return function(pair) {
+  d3.selectAll('.browserItem').attr('class','browserItem biInactive');
+  d3.select(this).attr('class','browserItem biActive');
+  browser._showClone(browser._comparisonLeft, pair[0]);
+  browser._showClone(browser._comparisonRight, pair[1]);
+}; };
 
 Browser.prototype._showClone = function(field, clone) {
   field.data([clone])

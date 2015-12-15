@@ -62,15 +62,7 @@ HEB.prototype.redraw = function() {
   emptyNode(this._container);
   this._container.attr('class','heb');
 
-  if(this._filters.length > 1) {
-    this._back = this._container.append("button")
-      .attr('class','heb_back')
-      .text("Back")
-      .on("click", function(){
-        this.popFilter();
-        this.redraw();
-      }.bind(this));
-  }
+  
  
   this._bundle = d3.layout.bundle();
 
@@ -84,6 +76,17 @@ HEB.prototype.redraw = function() {
     .attr({"width":this._diameter,'height':this._diameter})
   .append("g")
     .attr("transform", "translate(" + this._radius + "," + this._radius + ")");
+
+  if(this._filters.length > 1) {
+    this._back = this._container.append('div')
+      .attr('class','heb_back')
+    .append("button")
+      .text("Back")
+      .on("click", function(){
+        this.popFilter();
+        this.redraw();
+      }.bind(this));
+  }
 
   this._svg.selectAll(".link")
     .data(this._bundle(this._links.map(function(link){
