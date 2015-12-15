@@ -87,7 +87,7 @@ Browser.prototype._showFileBrowsers = function(fileId, otherFileIds) {
     .on("click", Browser._showPair(this));
   
   browserfieldUpdate
-    .html(function(p) { return "[" + pairSize(p) + "]&nbsp;&nbsp;&nbsp;&nbsp;" + pairString(p); });
+    .html(function(p) { return "[size " + pairSize(p) + "] [type "+pairType(p)+"] " + pairString(p); });
 };
 
 Browser._showPair = function(browser){ return function(pair) {
