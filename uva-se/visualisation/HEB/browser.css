@@ -1,0 +1,27 @@
+.browser {
+  background-color: #555555;
+  height: 400px;
+  width: 650px;
+  overflow: scroll;
+  white-space: nowrap;
+ }
+
+.browserItem {
+  fill: #555555;
+  color: white;
+  font: 10pt "Courier New";
+  text-anchor: end;
+}
+
+.comparison {
+  height: 400px;
+  width: 700px;
+  white-space: nowrap;
+  display: inline-block;
+
+  background-color: #333333;
+  color: white;
+  overflow: scroll;
+  font: 10pt "Courier New";
+  text-anchor: end;  
+}

@@ -1,0 +1,8 @@
+.node {
+  font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.link {
+  stroke-width: 4px;
+  fill: none;
+}
