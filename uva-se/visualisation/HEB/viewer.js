@@ -2,15 +2,16 @@ function Viewer(container) {
   emptyNode(container);
   this._container = container;
 
-  this._filepickercontainer = container.append('div')
-    .attr('class','viewer_fpcontainer');
+//  this._filepickercontainer = container.append('div')
+//    .attr('class','viewer_fpcontainer');
   this._hebcontainer = container.append('div');
   this._browsercontainer = container.append('div');
   this._heb = this._browser = null;
 
-  this._filepicker = this._filepickercontainer.append('input')
-    .attr('type','file')
-    .on('change', this._readfile.bind(this));
+//  this._filepicker = this._filepickercontainer.append('input')
+//    .attr('type','file')
+//    .on('change', this._readfile.bind(this));
+  this._reinit(CLONEDATA);
 }
 
 Viewer.prototype._readfile = function() {
