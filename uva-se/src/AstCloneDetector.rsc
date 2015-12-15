@@ -36,7 +36,7 @@ public tuple[set[clone_t], list[list[tuple[token_t, loc]]]] findClones(loc proje
 }
 
 public tuple[set[clone_t], list[list[tuple[token_t, loc]]]] findClones(set[Declaration] asts) {
-	int blockSize = 120;
+	int blockSize = 60;
 	
 	println("Tokenizing AST");
 	list[loc] files = [];
