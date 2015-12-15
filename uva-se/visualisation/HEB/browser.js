@@ -55,6 +55,18 @@ Browser.prototype._showFileBrowsers = function(fileId, otherFileIds) {
     }
   }
   
+  for (var i = 0; i < pairs.length; i++) {
+    var pair = [pairs[i][1], pairs[i][0]];
+
+    for (var j = 0; j < pairs.length; j++) {
+      if (pairs[j][0].text == pair[0].text && pairs[j][1].text == pair[1].text) {
+        pairs.splice(i, 1);
+        i--;
+        break;
+      }
+    }
+  }
+
   var browserfieldUpdate = browserfield.selectAll("div").data(pairs);
 
   browserfieldUpdate.enter().append("div")
