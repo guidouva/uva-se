@@ -59,14 +59,13 @@ Browser.prototype._showFileBrowsers = function(fileId, otherFileIds) {
     var pair = [pairs[i][1], pairs[i][0]];
 
     for (var j = 0; j < pairs.length; j++) {
-      if (pairs[j][0].text == pair[0].text && pairs[j][1].text == pair[1].text) {
+      if (pair[0].text != pair[1].text && pairs[j][0].text == pair[0].text && pairs[j][1].text == pair[1].text) {
         pairs.splice(i, 1);
         i--;
         break;
       }
     }
   }
-
   var browserfieldUpdate = browserfield.selectAll("div").data(pairs);
 
   browserfieldUpdate.enter().append("div")
@@ -75,13 +74,8 @@ Browser.prototype._showFileBrowsers = function(fileId, otherFileIds) {
   
   browserfieldUpdate
     .html(function(d, i) {
-      var type = 2;
 
-      if (removeIndentation(removeComments(d[0].text)) == removeIndentation(removeComments(d[1].text))) {
-        type = 1;
-      }
-
-      return i + " type: " + type + " " + files[d[0].file] + " " + files[d[1].file];
+      return i + " type: " + pairType(d) + " " + files[d[0].file] + " " + files[d[1].file];
     });
 };
 
@@ -101,6 +95,14 @@ Browser.prototype._showClone = function(field, clone) {
       return text;
     }.bind(this));
 };
+
+function pairType(pair) {
+  if (removeIndentation(removeComments(pair[0].text)) == removeIndentation(removeComments(pair[1].text))) {
+    return 1;
+  }
+
+  return 2;
+}
 
 function addLineNumbers(text, beginLineNumber) {
   var lines = text.split("\n");
@@ -130,6 +132,12 @@ function removeIndentation(str) {
       }
     }
 
+    if (line == "\n" || line == "\r\n" || line == "\r" || line == "") {
+      lines.splice(i, 1);
+      i--;
+      continue
+    }
+
     lines[i] = line;
   }
 
@@ -145,20 +153,10 @@ function removeComments(str) {
     var mode = {
         singleQuote: false,
         doubleQuote: false,
-        regex: false,
         blockComment: false,
         lineComment: false,
-        condComp: false 
     };
     for (var i = 0, l = str.length; i < l; i++) {
- 
-        if (mode.regex) {
-            if (str[i] === '/' && str[i-1] !== '\\') {
-                mode.regex = false;
-            }
-            continue;
-        }
- 
         if (mode.singleQuote) {
             if (str[i] === "'" && str[i-1] !== '\\') {
                 mode.singleQuote = false;
@@ -183,17 +181,10 @@ function removeComments(str) {
         }
  
         if (mode.lineComment) {
-            if (str[i] == '\\' && (str[i+1] === 'n' || str[i+1] === 'r')) {
+            if (str[i+1] === '\n' || str[i+1] === '\r') {
                 mode.lineComment = false;
             }
             str[i] = '';
-            continue;
-        }
- 
-        if (mode.condComp) {
-            if (str[i-2] === '@' && str[i-1] === '*' && str[i] === '/') {
-                mode.condComp = false;
-            }
             continue;
         }
  
@@ -201,12 +192,7 @@ function removeComments(str) {
         mode.singleQuote = str[i] === "'";
  
         if (str[i] === '/') {
- 
-            if (str[i+1] === '*' && str[i+2] === '@') {
-                mode.condComp = true;
-                continue;
-            }
-            if (str[i+1] === '*') {
+           if (str[i+1] === '*') {
                 str[i] = '';
                 mode.blockComment = true;
                 continue;
@@ -216,10 +202,7 @@ function removeComments(str) {
                 mode.lineComment = true;
                 continue;
             }
-            mode.regex = true;
- 
         }
- 
     }
     return str.join('').slice(2, -2);
 }
