@@ -57,7 +57,6 @@ public tuple[set[clone_t], list[list[tuple[token_t, loc]]]] findClones(set[Decla
 }
 
 alias jsobj_t = map[str,value];
-alias fileinfo_t = tuple[str,int];
 alias clonepair_t = tuple[jsobj_t, jsobj_t];
 
 public void writeClones(loc project, loc destination) {
@@ -70,16 +69,19 @@ public void writeClones(set[Declaration] asts, loc destination) {
 	jsobj_t json = ();
 	
 	//writeFile(destination, "");
-	list[fileinfo_t] fileuris = [];
+	list[str] fileuris = [];
 	map[str,int] filesIndex = ();
 
 	list[clonepair_t] clonedata = [];
-	map[int, map[int,real]] duplicationdata = ();
+	
+	map[fid_t, int] fileSizes = ();
+	map[fid_t, map[fid_t,set[int]]] clonedLinesPerFilePair = ();
+	map[fid_t, map[fid_t,real]] duplicationdata = ();
 	
 	println("Preparing json");
 	for (<clone1, clone2, cloneSize> <- blocks) {
 		clonepair_t clonepair = <(), ()>;
-		tuple[int,int] uris = <0,0>;
+		tuple[int,set[int],int,set[int]] fileTokens = <0,{},0,{}>;
 		
 		for (<<fId, tokenNumber>, i> <- [<clone1, 0>, <clone2, 1>]) {
 			cloneLocs = [l | <_, l> <- tokensAndLocations[fId][tokenNumber .. tokenNumber + cloneSize - 1]];
@@ -100,33 +102,54 @@ public void writeClones(set[Declaration] asts, loc destination) {
 				}
 			}
 			
+			
 			if(loc1.uri notin filesIndex) {
 				filesIndex[loc1.uri] = size(fileuris);
-				fileuris += <loc1.uri, size(tokensAndLocations[fId])>;
+				fileuris += loc1.uri;
 			}
 			
+			fIdx = filesIndex[loc1.uri];
+
+			if(fIdx notin fileSizes) fileSizes[fIdx] = size(tokensAndLocations[fId]);
+			
 			clonepair[i] = (
-				"file" : filesIndex[loc1.uri],
+				"file" : fIdx,
 				"begin" : loc1.begin.line,
 				"end" : loc2.end.line,
 				"text" : getTextBetween(loc1, loc2)
 			);
-			uris[i] = filesIndex[loc1.uri];
+
+			fileTokens[i*2] = fIdx;
+			fileTokens[i*2+1] = toSet([tokenNumber .. tokenNumber + cloneSize - 1]);
 		}
 		
 		clonedata += clonepair;
+		
+		fids = <fileTokens[0], fileTokens[2]>;
+		
+		if(fids[0] notin clonedLinesPerFilePair)
+			clonedLinesPerFilePair[fids[0]] = ();
+		if(fids[1] notin clonedLinesPerFilePair[fids[0]])
+			clonedLinesPerFilePair[fids[0]][fids[1]] = {};
 
-		leastLOC = min(fileuris[uris[0]][1], fileuris[uris[1]][1]);
-		largestDuplicationRatio = toReal(cloneSize) / toReal(leastLOC);
-
-		if(uris[0] notin duplicationdata) duplicationdata[uris[0]] = ();
-		if(uris[1] notin duplicationdata[uris[0]]) duplicationdata[uris[0]][uris[1]] = 0.0;
-		duplicationdata[uris[0]][uris[1]] += largestDuplicationRatio;
+		if(fids[1] notin clonedLinesPerFilePair)
+			clonedLinesPerFilePair[fids[1]] = ();
+		if(fids[0] notin clonedLinesPerFilePair[fids[1]])
+			clonedLinesPerFilePair[fids[1]][fids[0]] = {};
+		
+		clonedLinesPerFilePair[fids[0]][fids[1]] += fileTokens[1];
+		clonedLinesPerFilePair[fids[1]][fids[0]] += fileTokens[3];
 	}
 	
-	json["files"] = [ escape(uri, ("\\":"/")) | <uri,_> <- fileuris ];
+	json["files"] = [ escape(uri, ("\\":"/")) | uri <- fileuris ];
 	json["clonedata"] = clonedata;
-	json["duplicationdata"] = duplicationdata;
+	json["duplicationdata"] = (
+		fid1 : (
+			fid2 : toReal(size(clonedLinesPerFilePair[fid1][fid2])) / toReal(fileSizes[fid1])
+			| fid2 <- clonedLinesPerFilePair[fid1]
+		)
+		| fid1 <- clonedLinesPerFilePair
+	);
 	
 	println("Writing to output");
 	writeFile(destination, "CLONEDATA = "+toJSON(json)+";");
