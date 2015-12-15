@@ -6,10 +6,18 @@
 }
 
 .browserItem {
-  color: white;
   font: 10pt "Courier New";
   text-anchor: end;
   cursor: pointer;
+}
+
+.biInactive {
+  color: white;
+}
+
+.biActive {
+  background-color: white;
+  color: black;
 }
 
 .comparison {
